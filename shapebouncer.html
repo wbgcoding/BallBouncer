@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shape Bouncer</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#050510; display:flex; height:100vh; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; }
+        canvas { display:block; flex:1; }
+
+        /* ── Reset button ── */
+        #resetBtn {
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:6px; color:#2e5070;
+            font-size:9px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+            padding:4px 10px; cursor:pointer; margin-top:8px;
+            transition:border-color .15s, color .15s;
+        }
+        #resetBtn:hover { border-color:#006688; color:#00d4ff; }
+
+        #panel {
+            width:224px; flex-shrink:0;
+            background:#07071a; border-left:1px solid #111128;
+            padding:14px 11px; display:flex; flex-direction:column; gap:14px;
+            overflow-y:auto;
+        }
+
+        /* ── Logo ── */
+        #logo {
+            text-align:center;
+            padding-bottom:12px;
+            border-bottom:1px solid #0e1628;
+        }
+        .logo-title {
+            font-size:15px; font-weight:800; letter-spacing:.06em; line-height:1;
+        }
+        .logo-title .w1 { color:#3a6888; }
+        .logo-title .w2 {
+            color:#00d4ff;
+            text-shadow:0 0 10px rgba(0,212,255,.55), 0 0 22px rgba(0,212,255,.2);
+        }
+
+        /* ── Audio bar ── */
+        #audio-bar { display:flex; flex-direction:column; gap:6px; }
+        .audio-row { display:flex; align-items:center; gap:7px; }
+        .audio-row input[type=range] { flex:1; }
+
+        /* Shared mute-button style */
+        .mute-btn {
+            flex-shrink:0; position:relative; overflow:hidden;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:6px; cursor:pointer; line-height:1;
+            width:32px; height:28px;
+            display:flex; align-items:center; justify-content:center;
+            transition:border-color .15s;
+        }
+        .mute-btn:hover { border-color:#006688; }
+        .mute-btn.muted { border-color:#3a1010; }
+        .mute-btn.muted .btn-icon { opacity:.35; }
+        .mute-btn .mute-slash {
+            display:none; position:absolute; inset:0; pointer-events:none;
+        }
+        .mute-btn .mute-slash::before {
+            content:''; position:absolute;
+            width:2px; height:calc(100% + 8px);
+            background:#cc1111; border-radius:1px;
+            top:-4px; left:50%;
+            transform:translateX(-50%) rotate(-40deg);
+        }
+        .mute-btn.muted .mute-slash { display:block; }
+
+        #muteBtn     .btn-icon { color:#aaddee; font-size:17px; }
+        #ballMuteBtn .btn-icon { color:#5588aa; font-size:19px; }
+
+        /* ── Shape grid ── */
+        .sec-title { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:#2e4055; margin-bottom:7px; }
+        #shape-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
+        .shape-btn {
+            aspect-ratio:1; background:#0b1222; border:1.5px solid #162030;
+            border-radius:6px; cursor:pointer; display:flex; align-items:center;
+            justify-content:center; padding:0; transition:border-color .15s,background .15s;
+        }
+        .shape-btn:hover  { border-color:#006688; background:#0e1828; }
+        .shape-btn.active { border-color:#00d4ff; background:#081522; box-shadow:0 0 8px rgba(0,212,255,.15); }
+        .shape-btn svg    { width:22px; height:22px; display:block; }
+        .shape-btn polygon,
+        .shape-btn circle { stroke:#2e5570; fill:none; stroke-width:1.8; stroke-linejoin:round; }
+        .shape-btn.active polygon,
+        .shape-btn.active circle { stroke:#00d4ff; }
+
+        /* ── Sliders ── */
+        .ctrl label {
+            display:flex; justify-content:space-between; align-items:baseline;
+            font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+            color:#2e4455; margin-bottom:7px;
+        }
+        .ctrl label span { color:#00d4ff; font-size:13px; font-weight:600; letter-spacing:0; }
+        input[type=range] {
+            -webkit-appearance:none; appearance:none;
+            width:100%; height:3px; border-radius:2px; outline:none; cursor:pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance:none; width:12px; height:12px; border-radius:50%;
+            background:#00d4ff; box-shadow:0 0 6px rgba(0,212,255,.7); cursor:pointer;
+        }
+        input[type=range]::-moz-range-thumb {
+            width:12px; height:12px; border:none; border-radius:50%;
+            background:#00d4ff; box-shadow:0 0 6px rgba(0,212,255,.7); cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<button id="resetBtn">Reset</button>
+<div id="panel">
+
+    <div id="logo">
+        <div class="logo-title">
+            <span class="w1">Shape</span>&nbsp;<span class="w2">Bouncer</span>
+        </div>
+    </div>
+
+    <div id="audio-bar">
+        <div class="audio-row">
+            <button id="muteBtn" class="mute-btn" title="Toggle music">
+                <span class="btn-icon">&#9835;</span>
+                <span class="mute-slash"></span>
+            </button>
+            <input type="range" id="sVolume" min="0" max="100" value="45" title="Music volume">
+        </div>
+        <div class="audio-row">
+            <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds">
+                <span class="btn-icon">&#9679;</span>
+                <span class="mute-slash"></span>
+            </button>
+            <input type="range" id="sBallSound" min="0" max="100" value="20" title="Ball hit volume">
+        </div>
+    </div>
+
+    <div>
+        <div class="sec-title">Shape</div>
+        <div id="shape-grid"></div>
+    </div>
+
+    <div class="ctrl">
+        <label>Balls <span id="vBalls">500</span></label>
+        <input type="range" id="sBalls" min="1" max="1000" value="500">
+    </div>
+    <div class="ctrl">
+        <label>Ball Size <span id="vBallSize">8</span></label>
+        <input type="range" id="sBallSize" min="3" max="18" value="8">
+    </div>
+    <div class="ctrl">
+        <label>Gravity <span id="vGravity">5</span></label>
+        <input type="range" id="sGravity" min="0" max="10" value="5">
+    </div>
+    <div class="ctrl">
+        <label>Ball Speed <span id="vBallSpeed">5</span></label>
+        <input type="range" id="sBallSpeed" min="1" max="10" value="5">
+    </div>
+    <div class="ctrl">
+        <label>Shape Speed <span id="vShapeSpeed">5</span></label>
+        <input type="range" id="sShapeSpeed" min="0" max="10" value="5">
+    </div>
+
+</div>
+<script>
+// ── Canvas ────────────────────────────────────────────────────
+const c   = document.getElementById('c');
+const ctx = c.getContext('2d', { alpha: true, antialias: true });
+const PANEL_W = 224;
+
+// Ensure canvas resolution matches visual size
+function resizeCanvas() {
+    c.width  = window.innerWidth - PANEL_W;
+    c.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const W = c.width, H = c.height, cx = W/2, cy = H/2;
+
+const SHAPE_R  = 0.475 * Math.min(W, H);
+const SUBSTEPS = 2;
+
+// BALL_R is dynamic (slider-controlled); initialise from screen size
+const _defaultR = Math.round(Math.max(3, Math.min(18, SHAPE_R * 0.018)));
+document.getElementById('sBallSize').value = _defaultR;
+let BALL_R = _defaultR;
+
+// Pre-rendered background — drawn once, used every frame for a clean clear
+const bgCanvas = document.createElement('canvas');
+bgCanvas.width = W; bgCanvas.height = H;
+const bgCtx = bgCanvas.getContext('2d');
+const _bgGr = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, SHAPE_R * 1.4);
+_bgGr.addColorStop(0, '#1a2850');
+_bgGr.addColorStop(1, '#0a0f25');
+bgCtx.fillStyle = _bgGr;
+bgCtx.fillRect(0, 0, W, H);
+
+// Ensure canvas is rendered on first frame
+ctx.drawImage(bgCanvas, 0, 0);
+
+// ── Shapes ────────────────────────────────────────────────────
+const SHAPES = [
+    { sides:3,  star:false, label:'Triangle',  sa:-Math.PI/2 },
+    { sides:4,  star:false, label:'Square',    sa:-Math.PI/4 },
+    { sides:5,  star:false, label:'Pentagon',  sa:-Math.PI/2 },
+    { sides:6,  star:false, label:'Hexagon',   sa:-Math.PI/3 },
+    { sides:7,  star:false, label:'Heptagon',  sa:-Math.PI/2 },
+    { sides:8,  star:false, label:'Octagon',   sa:-3*Math.PI/8 },
+    { sides:9,  star:false, label:'Nonagon',   sa:-Math.PI/2 },
+    { sides:10, star:false, label:'Decagon',   sa:-2*Math.PI/5 },
+    { sides:12, star:false, label:'Dodecagon', sa:-5*Math.PI/12 },
+    { sides:3,  star:true,  label:'3-Star',    sa:-Math.PI/2,  ir:0.25 },
+    { sides:4,  star:true,  label:'4-Star',    sa:-Math.PI/2,  ir:0.38 },
+    { sides:5,  star:true,  label:'5-Star',    sa:-Math.PI/2,  ir:0.382 },
+    { sides:6,  star:true,  label:'6-Star',    sa:-Math.PI/2,  ir:0.50 },
+    { sides:7,  star:true,  label:'7-Star',    sa:-Math.PI/2,  ir:0.35 },
+    { sides:8,  star:true,  label:'8-Star',    sa:-Math.PI/2,  ir:0.40 },
+    { sides:0,  star:false, label:'Circle',    sa:0 },
+];
+let currentShape = SHAPES[3];
+
+// ── Audio ─────────────────────────────────────────────────────
+let audioCtx = null, masterGain = null, reverbNode = null;
+let audioMuted = false, ballSoundMuted = false;
+let audioVol = 0.45, audioStarted = false;
+let ballSoundVol = 0.20;
+let soundsThisFrame = 0;
+const MAX_SOUNDS_PER_FRAME = 3;
+let noiseBuffer = null;
+
+function makeNoiseBuffer() {
+    const len = Math.floor(audioCtx.sampleRate * 0.1);
+    const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+}
+
+function startAudio() {
+    if (audioStarted) return;
+    audioStarted = true;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        const revSec = 1.6, revLen = Math.floor(audioCtx.sampleRate * revSec);
+        const revBuf = audioCtx.createBuffer(2, revLen, audioCtx.sampleRate);
+        for (let ch = 0; ch < 2; ch++) {
+            const d = revBuf.getChannelData(ch);
+            for (let i = 0; i < revLen; i++)
+                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 2.8);
+        }
+        reverbNode = audioCtx.createConvolver();
+        reverbNode.buffer = revBuf;
+
+        const delay = audioCtx.createDelay(0.6);
+        delay.delayTime.value = 0.22;
+        const delayFB = audioCtx.createGain();
+        delayFB.gain.value = 0.30;
+        delay.connect(delayFB); delayFB.connect(delay);
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = audioMuted ? 0 : audioVol;
+        reverbNode.connect(masterGain);
+        delay.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+
+        [[55, .06], [110, .04], [164.8, .025]].forEach(([f, g]) => {
+            const osc = audioCtx.createOscillator();
+            const gn  = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = f * (1 + (Math.random() - .5) * 0.004);
+            gn.gain.value = g;
+            osc.connect(gn); gn.connect(reverbNode);
+            osc.start();
+        });
+
+        const pad = audioCtx.createOscillator();
+        const padGain = audioCtx.createGain();
+        const lfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        pad.type = 'triangle'; pad.frequency.value = 130.8;
+        padGain.gain.value = 0.025;
+        lfo.frequency.value = 0.25; lfoGain.gain.value = 0.018;
+        lfo.connect(lfoGain); lfoGain.connect(padGain.gain);
+        pad.connect(padGain); padGain.connect(reverbNode);
+        pad.start(); lfo.start();
+
+        noiseBuffer = makeNoiseBuffer();
+        scheduleBeat();
+        scheduleMelody(delay);
+    } catch(e) { console.warn('Audio unavailable', e); }
+}
+
+const SCALE = [130.8, 146.8, 164.8, 196, 220, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3, 784];
+
+function playNote(dest, freq, vol = 0.075, dur = 0.75) {
+    if (!audioCtx || audioMuted) return;
+    const osc = audioCtx.createOscillator();
+    const env = audioCtx.createGain();
+    osc.type = 'triangle'; osc.frequency.value = freq;
+    const t = audioCtx.currentTime;
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(vol, t + 0.025);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(env); env.connect(dest);
+    osc.start(t); osc.stop(t + dur + 0.05);
+}
+
+function playKick() {
+    if (!audioCtx || audioMuted) return;
+    const osc = audioCtx.createOscillator();
+    const env = audioCtx.createGain();
+    osc.type = 'sine';
+    const t = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(130, t);
+    osc.frequency.exponentialRampToValueAtTime(38, t + 0.2);
+    env.gain.setValueAtTime(0.6, t);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    osc.connect(env); env.connect(masterGain);
+    osc.start(t); osc.stop(t + 0.32);
+}
+
+function playHihat(open) {
+    if (!audioCtx || audioMuted || !noiseBuffer) return;
+    const src = audioCtx.createBufferSource();
+    src.buffer = noiseBuffer;
+    const hp = audioCtx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 7500;
+    const env = audioCtx.createGain();
+    const t = audioCtx.currentTime;
+    const dur = open ? 0.14 : 0.035;
+    env.gain.setValueAtTime(open ? 0.06 : 0.04, t);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(hp); hp.connect(env); env.connect(masterGain);
+    src.start(t);
+}
+
+const STEP_MS = 250;
+const KICK_STEPS = new Set([0, 4]);
+const OPEN_STEPS = new Set([2, 6]);
+let beatStep = 0;
+
+function scheduleBeat() {
+    if (audioCtx && !audioMuted) {
+        if (KICK_STEPS.has(beatStep)) playKick();
+        playHihat(OPEN_STEPS.has(beatStep));
+    }
+    beatStep = (beatStep + 1) % 8;
+    setTimeout(scheduleBeat, STEP_MS);
+}
+
+function scheduleMelody(dest) {
+    playNote(dest, SCALE[Math.floor(Math.random() * SCALE.length)]);
+    if (Math.random() < 0.38) {
+        const idx = Math.floor(Math.random() * SCALE.length);
+        setTimeout(() => playNote(dest, SCALE[idx], 0.05, 0.6), 140);
+    }
+    setTimeout(() => scheduleMelody(dest), 350 + Math.random() * 700);
+}
+
+function playBallHit(speed, ballX) {
+    if (!audioCtx || audioMuted || ballSoundMuted || !masterGain || ballSoundVol <= 0) return;
+    if (soundsThisFrame >= MAX_SOUNDS_PER_FRAME) return;
+    soundsThisFrame++;
+    const osc = audioCtx.createOscillator();
+    const env = audioCtx.createGain();
+    const pan = audioCtx.createStereoPanner();
+    pan.pan.value = Math.max(-1, Math.min(1, (ballX - cx) / SHAPE_R));
+    osc.type = 'sine';
+    osc.frequency.value = Math.min(200 + speed * 38, 1800);
+    const t = audioCtx.currentTime;
+    const vol = ballSoundVol * 0.22;
+    env.gain.setValueAtTime(vol, t);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    osc.connect(env); env.connect(pan); pan.connect(masterGain);
+    osc.start(t); osc.stop(t + 0.11);
+}
+
+const kickAudio = () => { startAudio(); audioCtx && audioCtx.resume(); };
+['pointerdown', 'keydown'].forEach(e => document.addEventListener(e, kickAudio, {once: true}));
+
+document.getElementById('muteBtn').addEventListener('click', function() {
+    kickAudio();
+    audioMuted = !audioMuted;
+    if (masterGain) masterGain.gain.value = audioMuted ? 0 : audioVol;
+    this.classList.toggle('muted', audioMuted);
+});
+
+document.getElementById('ballMuteBtn').addEventListener('click', function() {
+    ballSoundMuted = !ballSoundMuted;
+    this.classList.toggle('muted', ballSoundMuted);
+});
+
+const sVolumeEl = document.getElementById('sVolume');
+sVolumeEl.addEventListener('input', function() {
+    kickAudio();
+    audioVol = +this.value / 100;
+    if (masterGain && !audioMuted) masterGain.gain.value = audioVol;
+    trackBg(this);
+});
+
+// ── Live physics params ───────────────────────────────────────
+let gravity = 0.13, maxBallSpeed = 15, spin = 0.013;
+let shapeAngle = 0;
+
+// ── Ball sprites ──────────────────────────────────────────────
+function makeBallSprite(h, s, l) {
+    const sz = Math.ceil(BALL_R * 2) + 2;
+    let oc;
+    if (typeof OffscreenCanvas !== 'undefined') {
+        oc = new OffscreenCanvas(sz, sz);
+    } else {
+        oc = document.createElement('canvas');
+        oc.width = oc.height = sz;
+    }
+    const oc2 = oc.getContext('2d');
+    const r = BALL_R, o = 1;
+    const gr = oc2.createRadialGradient(
+        o + r - r * .32, o + r - r * .36, r * .06,
+        o + r, o + r, r
+    );
+    gr.addColorStop(0,   '#fff');
+    gr.addColorStop(0.3, `hsl(${h},${s}%,${l + 10}%)`);
+    gr.addColorStop(1,   `hsl(${h},${s}%,${l - 22}%)`);
+    oc2.beginPath();
+    oc2.arc(o + r, o + r, r, 0, Math.PI * 2);
+    oc2.fillStyle = gr;
+    oc2.fill();
+    return oc;
+}
+
+// ── Ball factory ──────────────────────────────────────────────
+function makeBall() {
+    const a = Math.random() * Math.PI * 2;
+    const d = Math.random() * SHAPE_R * 0.72;
+    const h = Math.random() * 360;
+    const s = 78 + Math.random() * 22;
+    const l = 55 + Math.random() * 15;
+    return {
+        h, s, l,
+        x: cx + Math.cos(a) * d,
+        y: cy + Math.sin(a) * d,
+        vx: (Math.random() * 2 - 1) * 4,
+        vy: (Math.random() * 2 - 1) * 4,
+        sprite: makeBallSprite(h, s, l),
+    };
+}
+let balls = Array.from({length: 500}, makeBall);
+console.log(`[INIT] Created ${balls.length} balls, BALL_R=${BALL_R}, SHAPE_R=${SHAPE_R}`);
+
+// ── Shape icon grid ───────────────────────────────────────────
+const NS   = 'http://www.w3.org/2000/svg';
+const grid = document.getElementById('shape-grid');
+
+function iconPoints(shape, R, ox, oy) {
+    const { sides, star, ir=0.4, sa } = shape;
+    if (star) {
+        return Array.from({length: sides * 2}, (_, i) => {
+            const r = i % 2 === 0 ? R : R * ir;
+            const a = sa + i * Math.PI / sides;
+            return `${(ox + r * Math.cos(a)).toFixed(2)},${(oy + r * Math.sin(a)).toFixed(2)}`;
+        }).join(' ');
+    }
+    const n = sides === 0 ? 48 : sides;
+    return Array.from({length: n}, (_, i) => {
+        const a = sa + i * 2 * Math.PI / n;
+        return `${(ox + R * Math.cos(a)).toFixed(2)},${(oy + R * Math.sin(a)).toFixed(2)}`;
+    }).join(' ');
+}
+
+SHAPES.forEach(shape => {
+    const btn = document.createElement('button');
+    btn.className = 'shape-btn' + (shape === currentShape ? ' active' : '');
+    btn.title = shape.label;
+
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 32 32');
+
+    let el;
+    if (shape.sides === 0) {
+        el = document.createElementNS(NS, 'circle');
+        el.setAttribute('cx', '16'); el.setAttribute('cy', '16'); el.setAttribute('r', '13');
+    } else {
+        el = document.createElementNS(NS, 'polygon');
+        el.setAttribute('points', iconPoints(shape, 13, 16, 16));
+    }
+    svg.appendChild(el);
+    btn.appendChild(svg);
+
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentShape = shape;
+        const verts = shapeVerts(shapeAngle);
+        for (const ball of balls) {
+            if (!insidePoly(ball.x, ball.y, verts)) respawnBall(ball);
+        }
+    });
+    grid.appendChild(btn);
+});
+
+// ── Slider helper ─────────────────────────────────────────────
+function trackBg(el) {
+    const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+    el.style.background = `linear-gradient(to right,#00d4ff ${pct}%,#1a2a40 ${pct}%)`;
+}
+function slider(id, valId, fn) {
+    const el = document.getElementById(id), vEl = document.getElementById(valId);
+    const upd = () => { vEl.textContent = el.value; trackBg(el); fn(+el.value); };
+    el.addEventListener('input', upd); upd();
+}
+
+slider('sBalls',      'vBalls',      v => { while (balls.length < v) balls.push(makeBall()); balls.length = v; });
+slider('sBallSize',   'vBallSize',   v => {
+    BALL_R = v;
+    for (const ball of balls) ball.sprite = makeBallSprite(ball.h, ball.s, ball.l);
+});
+slider('sGravity',    'vGravity',    v => { gravity = v * 0.026; });
+slider('sBallSpeed',  'vBallSpeed',  v => { maxBallSpeed = v * 3; });
+slider('sShapeSpeed', 'vShapeSpeed', v => { spin = v * 0.0026; });
+
+// Ball sound slider (no display span, just update the variable)
+document.getElementById('sBallSound').addEventListener('input', function() {
+    ballSoundVol = +this.value / 100;
+    trackBg(this);
+});
+
+trackBg(sVolumeEl);
+
+// ── Physics ───────────────────────────────────────────────────
+function shapeVerts(angle) {
+    const { sides, star, ir=0.4 } = currentShape;
+    const n = sides === 0 ? 48 : sides;
+    if (star) {
+        return Array.from({length: n * 2}, (_, i) => {
+            const r = i % 2 === 0 ? SHAPE_R : SHAPE_R * ir;
+            const a = angle + i * Math.PI / n;
+            return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+        });
+    }
+    return Array.from({length: n}, (_, i) => ({
+        x: cx + SHAPE_R * Math.cos(angle + i * 2 * Math.PI / n),
+        y: cy + SHAPE_R * Math.sin(angle + i * 2 * Math.PI / n),
+    }));
+}
+
+function insidePoly(px, py, verts) {
+    let inside = false;
+    for (let i = 0, j = verts.length - 1; i < verts.length; j = i++) {
+        const { x:xi, y:yi } = verts[i], { x:xj, y:yj } = verts[j];
+        if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+            inside = !inside;
+    }
+    return inside;
+}
+
+function respawnBall(ball) {
+    const a = Math.random() * Math.PI * 2, d = Math.random() * SHAPE_R * 0.28;
+    ball.x = cx + Math.cos(a) * d;
+    ball.y = cy + Math.sin(a) * d;
+    ball.vx = (Math.random() * 2 - 1) * 3;
+    ball.vy = (Math.random() * 2 - 1) * 3;
+}
+
+function closestOnSeg(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay, lenSq = dx * dx + dy * dy;
+    if (!lenSq) return { x: ax, y: ay };
+    const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+    return { x: ax + t * dx, y: ay + t * dy };
+}
+
+function wallCollide(ball, verts) {
+    const n = verts.length;
+    for (let i = 0; i < n; i++) {
+        const a = verts[i], b = verts[(i + 1) % n];
+        const cp = closestOnSeg(ball.x, ball.y, a.x, a.y, b.x, b.y);
+        const dx = ball.x - cp.x, dy = ball.y - cp.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < BALL_R && dist > 0) {
+            const nx = dx / dist, ny = dy / dist;
+            const evx = -spin * (cp.y - cy), evy = spin * (cp.x - cx);
+            const vn = (ball.vx - evx) * nx + (ball.vy - evy) * ny;
+            if (vn < 0) {
+                ball.vx -= 1.8 * vn * nx;
+                ball.vy -= 1.8 * vn * ny;
+                playBallHit(Math.hypot(ball.vx, ball.vy), ball.x);
+            }
+            ball.x += nx * (BALL_R - dist);
+            ball.y += ny * (BALL_R - dist);
+        }
+    }
+}
+
+function boundarySafety(ball) {
+    const dist = Math.hypot(ball.x - cx, ball.y - cy);
+    if (dist > SHAPE_R - BALL_R && dist > 0) {
+        const nx = (ball.x - cx) / dist, ny = (ball.y - cy) / dist;
+        ball.x = cx + nx * (SHAPE_R - BALL_R - 0.5);
+        ball.y = cy + ny * (SHAPE_R - BALL_R - 0.5);
+        const vn = ball.vx * nx + ball.vy * ny;
+        if (vn > 0) { ball.vx -= 2 * vn * nx; ball.vy -= 2 * vn * ny; }
+    }
+}
+
+// Hard containment: insidePoly catches escapes through concave notches that
+// edge-based wallCollide misses (e.g. star shape inner corners).
+function containBall(ball, verts) {
+    if (!insidePoly(ball.x, ball.y, verts)) {
+        const dx = cx - ball.x, dy = cy - ball.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const nx = dx / d, ny = dy / d;
+        const vn = ball.vx * nx + ball.vy * ny;
+        if (vn < 0) { ball.vx -= 1.8 * vn * nx; ball.vy -= 1.8 * vn * ny; }
+        ball.x += nx * BALL_R * 2;
+        ball.y += ny * BALL_R * 2;
+    }
+}
+
+function ballCollide() {
+    const cellSz = BALL_R * 2.4, inv = 1 / cellSz;
+    const hash = {};
+    const diam = BALL_R * 2, diam2 = diam * diam;
+
+    for (let i = 0; i < balls.length; i++) {
+        const b = balls[i];
+        const k = Math.floor(b.x * inv) * 10000 + Math.floor(b.y * inv);
+        (hash[k] || (hash[k] = [])).push(i);
+    }
+
+    for (let i = 0; i < balls.length; i++) {
+        const a = balls[i];
+        const gx = Math.floor(a.x * inv), gy = Math.floor(a.y * inv);
+        for (let ddx = -1; ddx <= 1; ddx++) {
+            for (let ddy = -1; ddy <= 1; ddy++) {
+                const cell = hash[(gx + ddx) * 10000 + (gy + ddy)];
+                if (!cell) continue;
+                for (let ci = 0; ci < cell.length; ci++) {
+                    const j = cell[ci];
+                    if (j <= i) continue;
+                    const b = balls[j];
+                    const ex = b.x - a.x, ey = b.y - a.y;
+                    const d2 = ex * ex + ey * ey;
+                    if (d2 < diam2 && d2 > 0) {
+                        const d = Math.sqrt(d2);
+                        const nx = ex / d, ny = ey / d;
+                        const ov = (diam - d) * 0.5;
+                        a.x -= nx * ov; a.y -= ny * ov;
+                        b.x += nx * ov; b.y += ny * ov;
+                        const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+                        if (vn < 0) {
+                            a.vx += vn * nx; a.vy += vn * ny;
+                            b.vx -= vn * nx; b.vy -= vn * ny;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+let lastVerts = null;
+
+function update() {
+    soundsThisFrame = 0;
+    const subSpin = spin / SUBSTEPS;
+    for (let s = 0; s < SUBSTEPS; s++) {
+        shapeAngle += subSpin;
+        const verts = shapeVerts(shapeAngle);
+        if (s === SUBSTEPS - 1) lastVerts = verts;
+        for (const ball of balls) {
+            ball.vy += gravity / SUBSTEPS;
+            let spd = Math.hypot(ball.vx, ball.vy);
+            if (spd > maxBallSpeed) { const f = maxBallSpeed / spd; ball.vx *= f; ball.vy *= f; }
+            ball.x += ball.vx / SUBSTEPS;
+            ball.y += ball.vy / SUBSTEPS;
+            wallCollide(ball, verts);
+            boundarySafety(ball);
+            containBall(ball, verts);
+            spd = Math.hypot(ball.vx, ball.vy);
+            if (spd > maxBallSpeed * 1.6) { const f = maxBallSpeed * 1.6 / spd; ball.vx *= f; ball.vy *= f; }
+        }
+        ballCollide();
+    }
+}
+
+// ── Draw ──────────────────────────────────────────────────────
+function draw() {
+    const verts = lastVerts || shapeVerts(shapeAngle);
+    const { star, sides } = currentShape;
+    const n = verts.length;
+
+    console.log(`[DRAW] verts.length=${n}, star=${star}, sides=${sides}, balls=${balls.length}`);
+
+    // Clear to pre-rendered background
+    ctx.drawImage(bgCanvas, 0, 0);
+
+    // Shape interior fill
+    ctx.beginPath();
+    verts.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(10,25,60,.55)';
+    ctx.fill();
+
+    // Glowing border
+    ctx.save();
+    ctx.shadowBlur = 36; ctx.shadowColor = '#00d4ff';
+    ctx.strokeStyle = '#22ccff'; ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+
+    // Vertex dots + edge ticks for small polygons
+    if (!star && sides > 0 && sides <= 10) {
+        verts.forEach(v => {
+            ctx.save();
+            ctx.shadowBlur = 8; ctx.shadowColor = '#00d4ff';
+            ctx.beginPath(); ctx.arc(v.x, v.y, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#88eeff'; ctx.fill();
+            ctx.restore();
+        });
+        for (let i = 0; i < n; i++) {
+            const a = verts[i], b = verts[(i + 1) % n];
+            const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+            const ex = b.x - a.x, ey = b.y - a.y, len = Math.hypot(ex, ey);
+            let nx = ey / len, ny = -ex / len;
+            if ((cx - mx) * nx + (cy - my) * ny < 0) { nx = -nx; ny = -ny; }
+            ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + nx * 10, my + ny * 10);
+            ctx.strokeStyle = 'rgba(0,180,255,.22)'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+    }
+
+    // Balls via pre-rendered sprites
+    const spriteOff = 1 + BALL_R;
+    for (const ball of balls) {
+        ctx.drawImage(ball.sprite, ball.x - spriteOff, ball.y - spriteOff);
+    }
+
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+    shapeAngle = 0;
+    for (const ball of balls) respawnBall(ball);
+});
+
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>
