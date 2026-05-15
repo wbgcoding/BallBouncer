@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>Shape Bouncer</title>
     <style>
+        :root {
+            --accent:#00d4ff; --accent-glow15:rgba(0,212,255,.15); --accent-glow70:rgba(0,212,255,.70);
+            --panel-bg:#07071a; --panel-border:#111128; --track-empty:#1a2a40;
+        }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#050510; display:flex; height:100vh; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; }
         canvas { display:block; flex:1; }
@@ -13,14 +17,14 @@
             background:#0b1222; border:1.5px solid #162030;
             border-radius:6px; color:#2e5070;
             font-size:9px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
-            padding:4px 10px; cursor:pointer; margin-top:8px;
+            padding:4px 10px; cursor:pointer; width:100%;
             transition:border-color .15s, color .15s;
         }
-        #resetBtn:hover { border-color:#006688; color:#00d4ff; }
+        #resetBtn:hover { border-color:#006688; color:var(--accent); }
 
         #panel {
             width:224px; flex-shrink:0;
-            background:#07071a; border-left:1px solid #111128;
+            background:var(--panel-bg); border-left:1px solid var(--panel-border);
             padding:14px 11px; display:flex; flex-direction:column; gap:14px;
             overflow-y:auto;
         }
@@ -32,18 +36,18 @@
             border-bottom:1px solid #0e1628;
         }
         .logo-title {
-            font-size:15px; font-weight:800; letter-spacing:.06em; line-height:1;
+            font-size:20px; font-weight:800; letter-spacing:.06em; line-height:1;
+            background:linear-gradient(120deg, #818cf8 0%, #38bdf8 55%, #00d4ff 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            background-clip:text;
+            filter:drop-shadow(0 0 8px rgba(56,189,248,.45));
         }
-        .logo-title .w1 { color:#3a6888; }
-        .logo-title .w2 {
-            color:#00d4ff;
-            text-shadow:0 0 10px rgba(0,212,255,.55), 0 0 22px rgba(0,212,255,.2);
-        }
+        .logo-title .w1 {}
+        .logo-title .w2 {}
 
         /* ── Audio bar ── */
         #audio-bar { display:flex; flex-direction:column; gap:6px; }
         .audio-row { display:flex; align-items:center; gap:7px; }
-        .audio-row input[type=range] { flex:1; }
 
         /* Shared mute-button style */
         .mute-btn {
@@ -81,12 +85,12 @@
             justify-content:center; padding:0; transition:border-color .15s,background .15s;
         }
         .shape-btn:hover  { border-color:#006688; background:#0e1828; }
-        .shape-btn.active { border-color:#00d4ff; background:#081522; box-shadow:0 0 8px rgba(0,212,255,.15); }
+        .shape-btn.active { border-color:var(--accent); background:#081522; box-shadow:0 0 8px var(--accent-glow15); }
         .shape-btn svg    { width:22px; height:22px; display:block; }
         .shape-btn polygon,
         .shape-btn circle { stroke:#2e5570; fill:none; stroke-width:1.8; stroke-linejoin:round; }
         .shape-btn.active polygon,
-        .shape-btn.active circle { stroke:#00d4ff; }
+        .shape-btn.active circle { stroke:var(--accent); }
 
         /* ── Sliders ── */
         .ctrl label {
@@ -94,29 +98,38 @@
             font-size:9px; letter-spacing:.14em; text-transform:uppercase;
             color:#2e4455; margin-bottom:7px;
         }
-        .ctrl label span { color:#00d4ff; font-size:13px; font-weight:600; letter-spacing:0; }
+        .ctrl label span { color:var(--accent); font-size:13px; font-weight:600; letter-spacing:0; }
         input[type=range] {
             -webkit-appearance:none; appearance:none;
             width:100%; height:3px; border-radius:2px; outline:none; cursor:pointer;
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance:none; width:12px; height:12px; border-radius:50%;
-            background:#00d4ff; box-shadow:0 0 6px rgba(0,212,255,.7); cursor:pointer;
+            background:var(--accent); box-shadow:0 0 6px var(--accent-glow70); cursor:pointer;
         }
         input[type=range]::-moz-range-thumb {
             width:12px; height:12px; border:none; border-radius:50%;
-            background:#00d4ff; box-shadow:0 0 6px rgba(0,212,255,.7); cursor:pointer;
+            background:var(--accent); box-shadow:0 0 6px var(--accent-glow70); cursor:pointer;
         }
+
+        /* ── Themes ── */
+        #theme-grid { display:flex; flex-wrap:wrap; gap:7px; }
+        .theme-swatch {
+            width:26px; height:26px; border-radius:50%; cursor:pointer;
+            border:2px solid transparent; transition:transform .15s, border-color .15s;
+            outline:none;
+        }
+        .theme-swatch:hover { transform:scale(1.15); }
+        .theme-swatch.active { border-color:#fff; box-shadow:0 0 6px rgba(255,255,255,.3); }
     </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<button id="resetBtn">Reset</button>
 <div id="panel">
 
     <div id="logo">
         <div class="logo-title">
-            <span class="w1">Shape</span>&nbsp;<span class="w2">Bouncer</span>
+            <span class="w1">Ball</span>&nbsp;<span class="w2">Bouncer</span>
         </div>
     </div>
 
@@ -126,16 +139,18 @@
                 <span class="btn-icon">&#9835;</span>
                 <span class="mute-slash"></span>
             </button>
-            <input type="range" id="sVolume" min="0" max="100" value="45" title="Music volume">
+            <input type="range" id="sVolume" min="0" max="100" value="15" title="Music volume">
         </div>
         <div class="audio-row">
             <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds">
                 <span class="btn-icon">&#9679;</span>
                 <span class="mute-slash"></span>
             </button>
-            <input type="range" id="sBallSound" min="0" max="100" value="20" title="Ball hit volume">
+            <input type="range" id="sBallSound" min="0" max="100" value="2" title="Ball hit volume">
         </div>
     </div>
+
+    <button id="resetBtn">Reset</button>
 
     <div>
         <div class="sec-title">Shape</div>
@@ -156,11 +171,16 @@
     </div>
     <div class="ctrl">
         <label>Ball Speed <span id="vBallSpeed">5</span></label>
-        <input type="range" id="sBallSpeed" min="1" max="10" value="5">
+        <input type="range" id="sBallSpeed" min="1" max="20" value="5">
     </div>
     <div class="ctrl">
         <label>Shape Speed <span id="vShapeSpeed">5</span></label>
-        <input type="range" id="sShapeSpeed" min="0" max="10" value="5">
+        <input type="range" id="sShapeSpeed" min="1" max="20" value="5">
+    </div>
+
+    <div>
+        <div class="sec-title">Theme</div>
+        <div id="theme-grid"></div>
     </div>
 
 </div>
@@ -188,15 +208,29 @@ const _defaultR = Math.round(Math.max(3, Math.min(18, SHAPE_R * 0.018)));
 document.getElementById('sBallSize').value = _defaultR;
 let BALL_R = _defaultR;
 
-// Pre-rendered background — drawn once, used every frame for a clean clear
+// ── Themes ───────────────────────────────────────────────────
+const THEMES = [
+    { id:'cyber',  name:'Cyber',  swatch:'#00d4ff', bg1:'#1a2850', bg2:'#0a0f25', shapeStroke:'#22ccff', shapeShadow:'#00d4ff', shapeFill:'rgba(10,25,60,.55)',  dotFill:'#88eeff', dotShadow:'#00d4ff', tick:'rgba(0,180,255,.22)',    accent:'#00d4ff', glow15:'rgba(0,212,255,.15)',    glow70:'rgba(0,212,255,.70)',    panel:'#07071a', panelBorder:'#111128', trackEmpty:'#1a2a40' },
+    { id:'neon',   name:'Neon',   swatch:'#ff00ff', bg1:'#1a0030', bg2:'#0a0018', shapeStroke:'#ff44ff', shapeShadow:'#ff00ff', shapeFill:'rgba(30,0,50,.55)',   dotFill:'#ffaaff', dotShadow:'#ff00ff', tick:'rgba(255,0,255,.22)',    accent:'#ff44ff', glow15:'rgba(255,68,255,.15)',   glow70:'rgba(255,68,255,.70)',   panel:'#090011', panelBorder:'#1c0030', trackEmpty:'#1c0030' },
+    { id:'ember',  name:'Ember',  swatch:'#ff6b00', bg1:'#251005', bg2:'#100500', shapeStroke:'#ff8c44', shapeShadow:'#ff6b00', shapeFill:'rgba(40,15,0,.55)',   dotFill:'#ffcc88', dotShadow:'#ff6b00', tick:'rgba(255,107,0,.22)',   accent:'#ff8c44', glow15:'rgba(255,140,68,.15)',   glow70:'rgba(255,140,68,.70)',   panel:'#0d0500', panelBorder:'#1f0a00', trackEmpty:'#1f0a00' },
+    { id:'forest', name:'Forest', swatch:'#00ff88', bg1:'#0a2010', bg2:'#050f08', shapeStroke:'#44ffaa', shapeShadow:'#00ff88', shapeFill:'rgba(0,20,10,.55)',   dotFill:'#88ffcc', dotShadow:'#00ff88', tick:'rgba(0,255,136,.22)',   accent:'#44ffaa', glow15:'rgba(68,255,170,.15)',   glow70:'rgba(68,255,170,.70)',   panel:'#040e05', panelBorder:'#0a1f0c', trackEmpty:'#0a1f0c' },
+    { id:'ocean',  name:'Ocean',  swatch:'#0088ff', bg1:'#001830', bg2:'#000d18', shapeStroke:'#44aaff', shapeShadow:'#0088ff', shapeFill:'rgba(0,15,30,.55)',   dotFill:'#88ccff', dotShadow:'#0088ff', tick:'rgba(0,136,255,.22)',   accent:'#44aaff', glow15:'rgba(68,170,255,.15)',   glow70:'rgba(68,170,255,.70)',   panel:'#00080f', panelBorder:'#001525', trackEmpty:'#001525' },
+    { id:'sakura', name:'Sakura', swatch:'#ff66aa', bg1:'#1f0a15', bg2:'#0f0508', shapeStroke:'#ff88bb', shapeShadow:'#ff66aa', shapeFill:'rgba(30,5,15,.55)',   dotFill:'#ffbbdd', dotShadow:'#ff66aa', tick:'rgba(255,102,170,.22)', accent:'#ff88bb', glow15:'rgba(255,136,187,.15)',  glow70:'rgba(255,136,187,.70)',  panel:'#0a0407', panelBorder:'#1a0810', trackEmpty:'#1a0810' },
+];
+let currentTheme = THEMES[0];
+
+// Pre-rendered background — rebuilt on theme change
 const bgCanvas = document.createElement('canvas');
 bgCanvas.width = W; bgCanvas.height = H;
 const bgCtx = bgCanvas.getContext('2d');
-const _bgGr = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, SHAPE_R * 1.4);
-_bgGr.addColorStop(0, '#1a2850');
-_bgGr.addColorStop(1, '#0a0f25');
-bgCtx.fillStyle = _bgGr;
-bgCtx.fillRect(0, 0, W, H);
+function rebuildBgCanvas() {
+    const gr = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, SHAPE_R * 1.4);
+    gr.addColorStop(0, currentTheme.bg1);
+    gr.addColorStop(1, currentTheme.bg2);
+    bgCtx.fillStyle = gr;
+    bgCtx.fillRect(0, 0, W, H);
+}
+rebuildBgCanvas();
 
 // Ensure canvas is rendered on first frame
 ctx.drawImage(bgCanvas, 0, 0);
@@ -223,10 +257,10 @@ const SHAPES = [
 let currentShape = SHAPES[3];
 
 // ── Audio ─────────────────────────────────────────────────────
-let audioCtx = null, masterGain = null, reverbNode = null;
+let audioCtx = null, masterGain = null, ballGain = null, reverbNode = null;
 let audioMuted = false, ballSoundMuted = false;
-let audioVol = 0.45, audioStarted = false;
-let ballSoundVol = 0.20;
+let audioVol = 0.15, audioStarted = false;
+let ballSoundVol = 0.02;
 let soundsThisFrame = 0;
 const MAX_SOUNDS_PER_FRAME = 3;
 let noiseBuffer = null;
@@ -266,6 +300,10 @@ function startAudio() {
         reverbNode.connect(masterGain);
         delay.connect(masterGain);
         masterGain.connect(audioCtx.destination);
+
+        ballGain = audioCtx.createGain();
+        ballGain.gain.value = ballSoundMuted ? 0 : 1;
+        ballGain.connect(audioCtx.destination);
 
         [[55, .06], [110, .04], [164.8, .025]].forEach(([f, g]) => {
             const osc = audioCtx.createOscillator();
@@ -362,7 +400,7 @@ function scheduleMelody(dest) {
 }
 
 function playBallHit(speed, ballX) {
-    if (!audioCtx || audioMuted || ballSoundMuted || !masterGain || ballSoundVol <= 0) return;
+    if (!audioCtx || ballSoundMuted || !ballGain || ballSoundVol <= 0) return;
     if (soundsThisFrame >= MAX_SOUNDS_PER_FRAME) return;
     soundsThisFrame++;
     const osc = audioCtx.createOscillator();
@@ -375,12 +413,28 @@ function playBallHit(speed, ballX) {
     const vol = ballSoundVol * 0.22;
     env.gain.setValueAtTime(vol, t);
     env.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
-    osc.connect(env); env.connect(pan); pan.connect(masterGain);
+    osc.connect(env); env.connect(pan); pan.connect(ballGain);
     osc.start(t); osc.stop(t + 0.11);
 }
 
 const kickAudio = () => { startAudio(); audioCtx && audioCtx.resume(); };
 ['pointerdown', 'keydown'].forEach(e => document.addEventListener(e, kickAudio, {once: true}));
+
+// Deactivate audio when in background
+document.addEventListener('visibilitychange', () => {
+    if (!audioCtx || !masterGain) return;
+    if (document.hidden) {
+        // Mute when going to background
+        if (!audioMuted) {
+            masterGain.gain.value = 0;
+        }
+    } else {
+        // Unmute when returning to foreground
+        if (!audioMuted) {
+            masterGain.gain.value = audioVol;
+        }
+    }
+});
 
 document.getElementById('muteBtn').addEventListener('click', function() {
     kickAudio();
@@ -391,6 +445,7 @@ document.getElementById('muteBtn').addEventListener('click', function() {
 
 document.getElementById('ballMuteBtn').addEventListener('click', function() {
     ballSoundMuted = !ballSoundMuted;
+    if (ballGain) ballGain.gain.value = ballSoundMuted ? 0 : 1;
     this.classList.toggle('muted', ballSoundMuted);
 });
 
@@ -505,7 +560,7 @@ SHAPES.forEach(shape => {
 // ── Slider helper ─────────────────────────────────────────────
 function trackBg(el) {
     const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
-    el.style.background = `linear-gradient(to right,#00d4ff ${pct}%,#1a2a40 ${pct}%)`;
+    el.style.background = `linear-gradient(to right,${currentTheme.accent} ${pct}%,${currentTheme.trackEmpty} ${pct}%)`;
 }
 function slider(id, valId, fn) {
     const el = document.getElementById(id), vEl = document.getElementById(valId);
@@ -529,6 +584,7 @@ document.getElementById('sBallSound').addEventListener('input', function() {
 });
 
 trackBg(sVolumeEl);
+trackBg(document.getElementById('sBallSound'));
 
 // ── Physics ───────────────────────────────────────────────────
 function shapeVerts(angle) {
@@ -701,13 +757,13 @@ function draw() {
     ctx.beginPath();
     verts.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
     ctx.closePath();
-    ctx.fillStyle = 'rgba(10,25,60,.55)';
+    ctx.fillStyle = currentTheme.shapeFill;
     ctx.fill();
 
     // Glowing border
     ctx.save();
-    ctx.shadowBlur = 36; ctx.shadowColor = '#00d4ff';
-    ctx.strokeStyle = '#22ccff'; ctx.lineWidth = 3;
+    ctx.shadowBlur = 36; ctx.shadowColor = currentTheme.shapeShadow;
+    ctx.strokeStyle = currentTheme.shapeStroke; ctx.lineWidth = 3;
     ctx.stroke();
     ctx.restore();
 
@@ -715,9 +771,9 @@ function draw() {
     if (!star && sides > 0 && sides <= 10) {
         verts.forEach(v => {
             ctx.save();
-            ctx.shadowBlur = 8; ctx.shadowColor = '#00d4ff';
+            ctx.shadowBlur = 8; ctx.shadowColor = currentTheme.dotShadow;
             ctx.beginPath(); ctx.arc(v.x, v.y, 2.5, 0, Math.PI * 2);
-            ctx.fillStyle = '#88eeff'; ctx.fill();
+            ctx.fillStyle = currentTheme.dotFill; ctx.fill();
             ctx.restore();
         });
         for (let i = 0; i < n; i++) {
@@ -727,7 +783,7 @@ function draw() {
             let nx = ey / len, ny = -ex / len;
             if ((cx - mx) * nx + (cy - my) * ny < 0) { nx = -nx; ny = -ny; }
             ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + nx * 10, my + ny * 10);
-            ctx.strokeStyle = 'rgba(0,180,255,.22)'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.strokeStyle = currentTheme.tick; ctx.lineWidth = 1.5; ctx.stroke();
         }
     }
 
@@ -742,6 +798,32 @@ function draw() {
 document.getElementById('resetBtn').addEventListener('click', () => {
     shapeAngle = 0;
     for (const ball of balls) respawnBall(ball);
+});
+
+// ── Themes ───────────────────────────────────────────────────
+function setTheme(theme) {
+    currentTheme = theme;
+    rebuildBgCanvas();
+    const r = document.documentElement;
+    r.style.setProperty('--accent',        theme.accent);
+    r.style.setProperty('--accent-glow15', theme.glow15);
+    r.style.setProperty('--accent-glow70', theme.glow70);
+    r.style.setProperty('--panel-bg',      theme.panel);
+    r.style.setProperty('--panel-border',  theme.panelBorder);
+    r.style.setProperty('--track-empty',   theme.trackEmpty);
+    document.querySelectorAll('input[type=range]').forEach(trackBg);
+    document.querySelectorAll('.theme-swatch').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.id === theme.id));
+}
+
+THEMES.forEach(theme => {
+    const btn = document.createElement('button');
+    btn.className = 'theme-swatch' + (theme === currentTheme ? ' active' : '');
+    btn.dataset.id = theme.id;
+    btn.title = theme.name;
+    btn.style.background = theme.swatch;
+    btn.addEventListener('click', () => setTheme(theme));
+    document.getElementById('theme-grid').appendChild(btn);
 });
 
 function loop() { update(); draw(); requestAnimationFrame(loop); }
