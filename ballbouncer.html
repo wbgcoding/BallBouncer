@@ -2,227 +2,565 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Shape Bouncer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Ball Bouncer — interactive physics playground. Launch balls inside spinning geometric shapes, tweak gravity, spin, fog trails and sounds in real time.">
+    <meta name="keywords" content="ball bouncer, physics simulation, bouncing balls, geometric shapes, canvas game, interactive animation, particle physics">
+    <meta property="og:title" content="Ball Bouncer">
+    <meta property="og:description" content="Interactive physics playground — balls bouncing inside spinning shapes with customizable gravity, sounds and visual effects.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>Ball Bouncer</title>
+    <link rel="icon" id="favicon" type="image/png">
+    <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+    <script defer src="/_vercel/insights/script.js"></script>
     <style>
         :root {
-            --accent:#00d4ff; --accent-glow15:rgba(0,212,255,.15); --accent-glow70:rgba(0,212,255,.70);
-            --panel-bg:#07071a; --panel-border:#111128; --track-empty:#1a2a40;
+            --accent:#00d4ff;
+            --accent-glow15:rgba(0,212,255,.15);
+            --accent-glow70:rgba(0,212,255,.70);
+            --panel-bg:#07071a;
+            --panel-border:#111128;
+            --track-empty:#1a2a40;
         }
+
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#050510; display:flex; height:100vh; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; }
+
+        body {
+            background:#050510;
+            display:flex;
+            height:100vh;
+            overflow:hidden;
+            font-family:'Segoe UI', system-ui, sans-serif;
+        }
+
         canvas { display:block; flex:1; }
 
-        /* ── Reset button ── */
-        #resetBtn {
-            background:#0b1222; border:1.5px solid #162030;
-            border-radius:6px; color:#2e5070;
-            font-size:9px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
-            padding:4px 10px; cursor:pointer; width:100%;
-            transition:border-color .15s, color .15s;
+        /* ── Ad column ─────────────────────────────────── */
+        #ad-left {
+            width:160px; flex-shrink:0;
+            background:#060616;
+            border-right:1px solid #0e1628;
+            display:flex; flex-direction:column; align-items:center;
+            padding:14px 10px; gap:14px; overflow:hidden;
         }
-        #resetBtn:hover { border-color:#006688; color:var(--accent); }
+        @media (max-width:960px) { #ad-left { display:none; } }
 
+        .ad-label {
+            font-size:8px; letter-spacing:.22em; text-transform:uppercase;
+            color:#18263a; width:100%; text-align:center;
+        }
+        .ad-placeholder {
+            width:140px; height:300px;
+            border:1px dashed #131326; border-radius:6px;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center; gap:8px;
+        }
+        .ad-placeholder-icon { font-size:22px; opacity:.15; }
+        .ad-placeholder span { font-size:9px; color:#18263a; text-align:center; line-height:1.7; letter-spacing:.08em; }
+
+        /* ── Panel ─────────────────────────────────────── */
         #panel {
-            width:224px; flex-shrink:0;
-            background:var(--panel-bg); border-left:1px solid var(--panel-border);
-            padding:14px 11px; display:flex; flex-direction:column; gap:14px;
+            width:220px; flex-shrink:0; position:relative;
+            background:var(--panel-bg);
+            border-left:1px solid var(--panel-border);
+            padding:10px 8px 8px;
+            display:flex; flex-direction:column; gap:7px;
             overflow-y:auto;
         }
-
-        /* ── Logo ── */
-        #logo {
-            text-align:center;
-            padding-bottom:12px;
-            border-bottom:1px solid #0e1628;
+        /* Subtle top accent fade */
+        #panel::before {
+            content:'';
+            position:absolute; top:0; left:0; right:0; height:36px;
+            background:linear-gradient(to bottom, rgba(0,212,255,.05), transparent);
+            pointer-events:none; z-index:0;
         }
+        /* Custom scrollbar */
+        #panel::-webkit-scrollbar { width:3px; }
+        #panel::-webkit-scrollbar-track { background:transparent; }
+        #panel::-webkit-scrollbar-thumb { background:#1a2a40; border-radius:2px; }
+        #panel::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+
+        /* ── Logo ──────────────────────────────────────── */
+        #logo {
+            display:flex; align-items:center; justify-content:center;
+            gap:8px; padding-bottom:2px; position:relative; z-index:1;
+        }
+        @keyframes logoRainbow {
+            0%   { filter: hue-rotate(0deg)   drop-shadow(0 0 6px rgba(129,140,248,.6)); }
+            100% { filter: hue-rotate(360deg) drop-shadow(0 0 6px rgba(129,140,248,.6)); }
+        }
+        @keyframes iconBallRainbow {
+            0%   { fill:hsl(0,85%,68%);   }
+            16%  { fill:hsl(60,85%,68%);  }
+            33%  { fill:hsl(120,85%,68%); }
+            50%  { fill:hsl(180,85%,68%); }
+            66%  { fill:hsl(240,85%,68%); }
+            83%  { fill:hsl(300,85%,68%); }
+            100% { fill:hsl(360,85%,68%); }
+        }
+        .logo-ball { flex-shrink:0; display:block; animation:logoRainbow 12s linear infinite; }
+        .cross-ball { animation:iconBallRainbow 8s linear infinite; }
         .logo-title {
-            font-size:20px; font-weight:800; letter-spacing:.06em; line-height:1;
+            font-size:19px; font-weight:800; letter-spacing:.06em; line-height:1;
             background:linear-gradient(120deg, #818cf8 0%, #38bdf8 55%, #00d4ff 100%);
             -webkit-background-clip:text; -webkit-text-fill-color:transparent;
             background-clip:text;
-            filter:drop-shadow(0 0 8px rgba(56,189,248,.45));
+            filter:drop-shadow(0 0 10px rgba(56,189,248,.5));
         }
-        .logo-title .w1 {}
-        .logo-title .w2 {}
+        .rnd-themes-btn {
+            width:100%; padding:5px 8px; margin-top:6px;
+            background:rgba(0,180,255,.07); border:1px solid rgba(0,180,255,.2);
+            border-radius:6px; color:rgba(160,200,230,.65);
+            font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+            cursor:pointer; transition:background .2s, border-color .2s, color .2s;
+        }
+        .rnd-themes-btn:hover { background:rgba(0,180,255,.16); border-color:rgba(0,180,255,.5); color:#e0f4ff; }
+        .rnd-themes-btn.active { background:rgba(0,212,255,.22); border-color:#00d4ff; color:#00d4ff; }
 
-        /* ── Audio bar ── */
-        #audio-bar { display:flex; flex-direction:column; gap:6px; }
+        /* ── Sound section ──────────────────────────────── */
+        #sound-section { display:flex; flex-direction:column; gap:5px; }
+        #audio-bar { display:flex; flex-direction:column; gap:5px; }
         .audio-row { display:flex; align-items:center; gap:7px; }
-
-        /* Shared mute-button style */
         .mute-btn {
             flex-shrink:0; position:relative; overflow:hidden;
             background:#0b1222; border:1.5px solid #162030;
             border-radius:6px; cursor:pointer; line-height:1;
-            width:32px; height:28px;
+            width:28px; height:24px;
             display:flex; align-items:center; justify-content:center;
-            transition:border-color .15s;
+            transition:border-color .15s, background .15s;
         }
-        .mute-btn:hover { border-color:#006688; }
+        .mute-btn:hover { border-color:#006688; background:#0d1830; }
         .mute-btn.muted { border-color:#3a1010; }
         .mute-btn.muted .btn-icon { opacity:.35; }
-        .mute-btn .mute-slash {
-            display:none; position:absolute; inset:0; pointer-events:none;
-        }
+        .mute-btn .mute-slash { display:none; position:absolute; inset:0; pointer-events:none; }
         .mute-btn .mute-slash::before {
-            content:''; position:absolute;
-            width:2px; height:calc(100% + 8px);
-            background:#cc1111; border-radius:1px;
-            top:-4px; left:50%;
+            content:''; position:absolute; width:2px; height:calc(100% + 8px);
+            background:#cc1111; border-radius:1px; top:-4px; left:50%;
             transform:translateX(-50%) rotate(-40deg);
         }
         .mute-btn.muted .mute-slash { display:block; }
+        #muteBtn     .btn-icon { color:#aaddee; font-size:15px; }
+        #ballMuteBtn .btn-icon { color:#5588aa; font-size:17px; }
 
-        #muteBtn     .btn-icon { color:#aaddee; font-size:17px; }
-        #ballMuteBtn .btn-icon { color:#5588aa; font-size:19px; }
+        /* ── Action row (Pause + Reset) ─────────────────── */
+        .action-row { display:flex; gap:6px; }
 
-        /* ── Shape grid ── */
-        .sec-title { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:#2e4055; margin-bottom:7px; }
-        #shape-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
-        .shape-btn {
-            aspect-ratio:1; background:#0b1222; border:1.5px solid #162030;
-            border-radius:6px; cursor:pointer; display:flex; align-items:center;
-            justify-content:center; padding:0; transition:border-color .15s,background .15s;
+        #pauseBtn {
+            flex-shrink:0;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:6px; color:#3a6080; cursor:pointer;
+            width:34px; height:28px; padding:0;
+            display:flex; align-items:center; justify-content:center;
+            transition:border-color .15s, color .15s, background .15s;
         }
-        .shape-btn:hover  { border-color:#006688; background:#0e1828; }
-        .shape-btn.active { border-color:var(--accent); background:#081522; box-shadow:0 0 8px var(--accent-glow15); }
-        .shape-btn svg    { width:22px; height:22px; display:block; }
+        #pauseBtn svg { display:block; }
+        #pauseBtn:hover { border-color:#006688; color:var(--accent); background:#0d1830; }
+        #pauseBtn.paused {
+            border-color:var(--accent);
+            color:var(--accent);
+            background:rgba(0,212,255,.08);
+            box-shadow:0 0 8px rgba(0,212,255,.12);
+        }
+
+        #resetBtn {
+            flex:1;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:6px; color:#2e5070;
+            font-size:9px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+            padding:4px 10px; cursor:pointer;
+            transition:border-color .15s, color .15s, background .15s;
+        }
+        #resetBtn:hover { border-color:#2a4060; color:var(--accent); background:#0d1830; }
+
+        /* ── Separator ──────────────────────────────────── */
+        hr.sep {
+            border:none;
+            border-top:1px solid rgba(255,255,255,.04);
+            box-shadow:0 1px 0 rgba(0,0,0,.25);
+            margin:0;
+        }
+
+        /* ── Section headers ────────────────────────────── */
+        .sec-title {
+            font-size:9px; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+            color:#3a5468; margin-bottom:5px;
+            position:relative; padding-left:9px;
+        }
+        .sec-title::before {
+            content:'';
+            position:absolute; left:0; top:50%;
+            transform:translateY(-50%);
+            width:2px; height:10px;
+            background:var(--accent); border-radius:1px; opacity:.45;
+        }
+        .sec-header {
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:5px;
+        }
+        .sec-header .sec-title { margin-bottom:0; }
+
+        .rnd-btn {
+            flex-shrink:0;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:4px; color:#2e5070; font-size:13px; cursor:pointer;
+            width:22px; height:20px; padding:0; line-height:1;
+            display:flex; align-items:center; justify-content:center;
+            transition:border-color .15s, color .15s, background .15s;
+        }
+        .rnd-btn:hover {
+            border-color:#006688; color:var(--accent); background:#0d1830;
+        }
+
+        /* ── Shape grids ────────────────────────────────── */
+        #shape-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:3px; }
+        #cross-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:3px; }
+        /* explicit height so 3-row grids don't overflow panel */
+
+        .shape-btn {
+            height:22px;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:4px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            padding:0;
+            transition:border-color .15s, background .15s, box-shadow .15s;
+        }
+        .shape-btn:hover  { border-color:#1e4060; background:#0d1a28; }
+        .shape-btn.active {
+            border-color:var(--accent); background:#081522;
+            box-shadow:0 0 10px var(--accent-glow15), inset 0 0 6px rgba(0,212,255,.06);
+        }
+        #shape-grid .shape-btn svg { width:14px; height:14px; display:block; }
+        #cross-grid .shape-btn svg { width:15px; height:15px; display:block; }
         .shape-btn polygon,
         .shape-btn circle { stroke:#2e5570; fill:none; stroke-width:1.8; stroke-linejoin:round; }
         .shape-btn.active polygon,
-        .shape-btn.active circle { stroke:var(--accent); }
+        .shape-btn.active circle { stroke:var(--accent); filter:drop-shadow(0 0 2px var(--accent)); }
 
-        /* ── Sliders ── */
+        /* ── Sliders ────────────────────────────────────── */
         .ctrl label {
             display:flex; justify-content:space-between; align-items:baseline;
-            font-size:9px; letter-spacing:.14em; text-transform:uppercase;
-            color:#2e4455; margin-bottom:7px;
+            font-size:9px; letter-spacing:.13em; text-transform:uppercase;
+            color:#2e4455; margin-bottom:4px;
         }
-        .ctrl label span { color:var(--accent); font-size:13px; font-weight:600; letter-spacing:0; }
+        .ctrl label span { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:0; }
         input[type=range] {
             -webkit-appearance:none; appearance:none;
             width:100%; height:3px; border-radius:2px; outline:none; cursor:pointer;
         }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance:none; width:12px; height:12px; border-radius:50%;
-            background:var(--accent); box-shadow:0 0 6px var(--accent-glow70); cursor:pointer;
+            -webkit-appearance:none;
+            width:12px; height:12px; border-radius:50%;
+            background:var(--accent);
+            box-shadow:0 0 7px var(--accent-glow70), 0 0 2px rgba(0,0,0,.6);
+            cursor:pointer;
+            transition:transform .1s;
         }
+        input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
         input[type=range]::-moz-range-thumb {
             width:12px; height:12px; border:none; border-radius:50%;
-            background:var(--accent); box-shadow:0 0 6px var(--accent-glow70); cursor:pointer;
+            background:var(--accent); box-shadow:0 0 7px var(--accent-glow70); cursor:pointer;
         }
 
-        /* ── Themes ── */
-        #theme-grid { display:flex; flex-wrap:wrap; gap:7px; }
+        /* ── Paired sliders ─────────────────────────────── */
+        .ctrl-pair { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+        /* ── Swatch grids ───────────────────────────────── */
+        #theme-grid, #ball-theme-grid, #fog-theme-grid {
+            display:flex; flex-wrap:wrap; gap:5px;
+        }
         .theme-swatch {
-            width:26px; height:26px; border-radius:50%; cursor:pointer;
-            border:2px solid transparent; transition:transform .15s, border-color .15s;
+            width:24px; height:24px; border-radius:50%; cursor:pointer;
+            border:2px solid transparent;
+            transition:transform .15s, border-color .15s, box-shadow .15s;
             outline:none;
         }
-        .theme-swatch:hover { transform:scale(1.15); }
-        .theme-swatch.active { border-color:#fff; box-shadow:0 0 6px rgba(255,255,255,.3); }
+        .theme-swatch:hover { transform:scale(1.18); }
+        .theme-swatch.active {
+            border-color:#fff;
+            box-shadow:0 0 0 1px rgba(255,255,255,.15), 0 0 8px rgba(255,255,255,.2);
+        }
     </style>
 </head>
 <body>
+
+<!-- ── Ad column ─────────────────────────────────────────────── -->
+<div id="ad-left">
+    <div class="ad-label">Sponsored</div>
+    <!--
+        Google AdSense setup:
+        1. Replace ca-pub-XXXXXXXXXXXXXXXX with your Publisher ID
+        2. Replace XXXXXXXXXX with your Ad Slot ID
+        3. Uncomment the three blocks below
+    -->
+    <!--
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle"
+         style="display:block;width:140px;height:600px"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="XXXXXXXXXX"
+         data-ad-format="fixed"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    -->
+    <div class="ad-placeholder">
+        <div class="ad-placeholder-icon">◈</div>
+        <span>Ad Space<br>160 × 600</span>
+    </div>
+</div>
+
 <canvas id="c"></canvas>
+
+<!-- ── Control panel ──────────────────────────────────────────── -->
 <div id="panel">
 
+    <!-- Logo -->
     <div id="logo">
-        <div class="logo-title">
-            <span class="w1">Ball</span>&nbsp;<span class="w2">Bouncer</span>
+        <svg class="logo-ball" width="22" height="22" viewBox="0 0 20 20">
+            <defs>
+                <radialGradient id="lg" cx="35%" cy="28%" r="70%">
+                    <stop offset="0%"   stop-color="#ffffff" stop-opacity=".95"/>
+                    <stop offset="35%"  stop-color="#818cf8"/>
+                    <stop offset="100%" stop-color="#0a1060"/>
+                </radialGradient>
+            </defs>
+            <circle cx="10" cy="10" r="9.5" fill="url(#lg)"/>
+            <circle cx="7"  cy="6.5" r="2.2" fill="white" opacity=".45"/>
+        </svg>
+        <div class="logo-title">Ball Bouncer</div>
+    </div>
+
+    <!-- Sound -->
+    <div id="sound-section">
+        <div class="sec-title">Sound</div>
+        <div id="audio-bar">
+            <div class="audio-row">
+                <button id="muteBtn" class="mute-btn" title="Toggle music">
+                    <span class="btn-icon">&#9835;</span>
+                    <span class="mute-slash"></span>
+                </button>
+                <input type="range" id="sVolume" min="0" max="100" value="10" title="Music volume">
+            </div>
+            <div class="audio-row">
+                <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds">
+                    <span class="btn-icon">&#9679;</span>
+                    <span class="mute-slash"></span>
+                </button>
+                <input type="range" id="sBallSound" min="0" max="100" value="2" title="Ball hit volume">
+            </div>
         </div>
     </div>
 
-    <div id="audio-bar">
-        <div class="audio-row">
-            <button id="muteBtn" class="mute-btn" title="Toggle music">
-                <span class="btn-icon">&#9835;</span>
-                <span class="mute-slash"></span>
-            </button>
-            <input type="range" id="sVolume" min="0" max="100" value="15" title="Music volume">
-        </div>
-        <div class="audio-row">
-            <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds">
-                <span class="btn-icon">&#9679;</span>
-                <span class="mute-slash"></span>
-            </button>
-            <input type="range" id="sBallSound" min="0" max="100" value="2" title="Ball hit volume">
-        </div>
+    <!-- Actions -->
+    <div class="action-row">
+        <button id="pauseBtn" title="Pause simulation">
+            <svg width="11" height="13" viewBox="0 0 11 13" fill="currentColor">
+                <rect x="0.5" y="0.5" width="3.5" height="12" rx="1.5"/>
+                <rect x="7" y="0.5" width="3.5" height="12" rx="1.5"/>
+            </svg>
+        </button>
+        <button id="resetBtn">&#10227; Reset</button>
     </div>
 
-    <button id="resetBtn">Reset</button>
+    <hr class="sep">
 
+    <!-- Shape -->
     <div>
-        <div class="sec-title">Shape</div>
+        <div class="sec-header">
+            <div class="sec-title">Shape</div>
+            <button class="rnd-btn" id="rndShape" title="Random shape">&#8635;</button>
+        </div>
         <div id="shape-grid"></div>
+        <div class="ctrl-pair" style="margin-top:6px">
+            <div class="ctrl">
+                <label>Size <span id="vShapeSize">47</span></label>
+                <input type="range" id="sShapeSize" min="20" max="85" value="47">
+            </div>
+            <div class="ctrl">
+                <label>Speed <span id="vShapeSpeed">5</span></label>
+                <input type="range" id="sShapeSpeed" min="1" max="20" value="5">
+            </div>
+        </div>
     </div>
 
-    <div class="ctrl">
-        <label>Balls <span id="vBalls">500</span></label>
-        <input type="range" id="sBalls" min="1" max="1000" value="500">
-    </div>
-    <div class="ctrl">
-        <label>Ball Size <span id="vBallSize">8</span></label>
-        <input type="range" id="sBallSize" min="3" max="18" value="8">
-    </div>
-    <div class="ctrl">
-        <label>Gravity <span id="vGravity">5</span></label>
-        <input type="range" id="sGravity" min="0" max="10" value="5">
-    </div>
-    <div class="ctrl">
-        <label>Ball Speed <span id="vBallSpeed">5</span></label>
-        <input type="range" id="sBallSpeed" min="1" max="20" value="5">
-    </div>
-    <div class="ctrl">
-        <label>Shape Speed <span id="vShapeSpeed">5</span></label>
-        <input type="range" id="sShapeSpeed" min="1" max="20" value="5">
-    </div>
+    <hr class="sep">
 
+    <!-- Cross -->
     <div>
-        <div class="sec-title">Theme</div>
+        <div class="sec-title">Cross</div>
+        <div id="cross-grid"></div>
+        <div class="ctrl-pair" style="margin-top:6px">
+            <div class="ctrl">
+                <label>Size <span id="vCrossSize">35</span></label>
+                <input type="range" id="sCrossSize" min="10" max="65" value="35">
+            </div>
+            <div class="ctrl">
+                <label>Speed <span id="vCrossSpeed">3</span></label>
+                <input type="range" id="sCrossSpeed" min="0" max="20" value="3">
+            </div>
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Balls -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title">Ball Colors</div>
+            <button class="rnd-btn" id="rndBallTheme" title="Random ball colors">&#8635;</button>
+        </div>
+        <div id="ball-theme-grid"></div>
+        <div class="ctrl-pair" style="margin-top:6px">
+            <div class="ctrl">
+                <label>Balls <span id="vBalls">100</span></label>
+                <input type="range" id="sBalls" min="1" max="1000" value="100">
+            </div>
+            <div class="ctrl">
+                <label>Size <span id="vBallSize">8</span></label>
+                <input type="range" id="sBallSize" min="3" max="18" value="8">
+            </div>
+        </div>
+        <div class="ctrl-pair">
+            <div class="ctrl">
+                <label>Speed <span id="vBallSpeed">5</span></label>
+                <input type="range" id="sBallSpeed" min="1" max="20" value="5">
+            </div>
+            <div class="ctrl">
+                <label>Random Size <span id="vSizeRandom">0</span></label>
+                <input type="range" id="sSizeRandom" min="0" max="10" value="0">
+            </div>
+        </div>
+        <div class="ctrl-pair">
+            <div class="ctrl">
+                <label>Gravity <span id="vGravity">5</span></label>
+                <input type="range" id="sGravity" min="0" max="10" value="5">
+            </div>
+            <div class="ctrl">
+                <label>Fog <span id="vFogTrail">0</span></label>
+                <input type="range" id="sFogTrail" min="0" max="30" value="0">
+            </div>
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Background -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title">Background</div>
+            <button class="rnd-btn" id="rndFogTheme" title="Random background style">&#8635;</button>
+        </div>
+        <div id="fog-theme-grid"></div>
+        <div class="ctrl" style="margin-top:6px">
+            <label>Fade <span id="vBg">20</span></label>
+            <input type="range" id="sBg" min="0" max="30" value="20">
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Theme -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title">Theme</div>
+            <button class="rnd-btn" id="rndTheme" title="Random theme">&#8635;</button>
+        </div>
         <div id="theme-grid"></div>
+        <button id="rndThemesCycle" class="rnd-themes-btn">&#10227; Random Themes</button>
     </div>
 
 </div>
 <script>
-// ── Canvas ────────────────────────────────────────────────────
+'use strict';
+
+// ── Canvas setup ──────────────────────────────────────────────
 const c   = document.getElementById('c');
-const ctx = c.getContext('2d', { alpha: true, antialias: true });
-const PANEL_W = 224;
-
-// Ensure canvas resolution matches visual size
-function resizeCanvas() {
-    c.width  = window.innerWidth - PANEL_W;
-    c.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-const W = c.width, H = c.height, cx = W/2, cy = H/2;
-
-const SHAPE_R  = 0.475 * Math.min(W, H);
+const ctx = c.getContext('2d', { alpha: false });
+const PANEL_W  = 220;
 const SUBSTEPS = 2;
 
-// BALL_R is dynamic (slider-controlled); initialise from screen size
+let W, H, cx, cy, SHAPE_R;
+let shapeSize = 47;
+
+function resizeCanvas() {
+    const adEl = document.getElementById('ad-left');
+    const adW  = adEl ? adEl.offsetWidth : 0;
+    c.width  = window.innerWidth - PANEL_W - adW;
+    c.height = window.innerHeight;
+    W = c.width; H = c.height; cx = W / 2; cy = H / 2;
+    SHAPE_R = (shapeSize / 100) * Math.min(W, H);
+}
+resizeCanvas();
+
 const _defaultR = Math.round(Math.max(3, Math.min(18, SHAPE_R * 0.018)));
 document.getElementById('sBallSize').value = _defaultR;
 let BALL_R = _defaultR;
+let sizeRandomness = 0;
 
-// ── Themes ───────────────────────────────────────────────────
+// ── Color themes ──────────────────────────────────────────────
 const THEMES = [
-    { id:'cyber',  name:'Cyber',  swatch:'#00d4ff', bg1:'#1a2850', bg2:'#0a0f25', shapeStroke:'#22ccff', shapeShadow:'#00d4ff', shapeFill:'rgba(10,25,60,.55)',  dotFill:'#88eeff', dotShadow:'#00d4ff', tick:'rgba(0,180,255,.22)',    accent:'#00d4ff', glow15:'rgba(0,212,255,.15)',    glow70:'rgba(0,212,255,.70)',    panel:'#07071a', panelBorder:'#111128', trackEmpty:'#1a2a40' },
-    { id:'neon',   name:'Neon',   swatch:'#ff00ff', bg1:'#1a0030', bg2:'#0a0018', shapeStroke:'#ff44ff', shapeShadow:'#ff00ff', shapeFill:'rgba(30,0,50,.55)',   dotFill:'#ffaaff', dotShadow:'#ff00ff', tick:'rgba(255,0,255,.22)',    accent:'#ff44ff', glow15:'rgba(255,68,255,.15)',   glow70:'rgba(255,68,255,.70)',   panel:'#090011', panelBorder:'#1c0030', trackEmpty:'#1c0030' },
-    { id:'ember',  name:'Ember',  swatch:'#ff6b00', bg1:'#251005', bg2:'#100500', shapeStroke:'#ff8c44', shapeShadow:'#ff6b00', shapeFill:'rgba(40,15,0,.55)',   dotFill:'#ffcc88', dotShadow:'#ff6b00', tick:'rgba(255,107,0,.22)',   accent:'#ff8c44', glow15:'rgba(255,140,68,.15)',   glow70:'rgba(255,140,68,.70)',   panel:'#0d0500', panelBorder:'#1f0a00', trackEmpty:'#1f0a00' },
-    { id:'forest', name:'Forest', swatch:'#00ff88', bg1:'#0a2010', bg2:'#050f08', shapeStroke:'#44ffaa', shapeShadow:'#00ff88', shapeFill:'rgba(0,20,10,.55)',   dotFill:'#88ffcc', dotShadow:'#00ff88', tick:'rgba(0,255,136,.22)',   accent:'#44ffaa', glow15:'rgba(68,255,170,.15)',   glow70:'rgba(68,255,170,.70)',   panel:'#040e05', panelBorder:'#0a1f0c', trackEmpty:'#0a1f0c' },
+    // Color-wheel order: red → orange → yellow → lime → green → teal → cyan → ice-blue → blue → violet → purple → magenta → pink → silver
+    { id:'blood',  name:'Blood',  swatch:'#cc0022', bg1:'#1a0007', bg2:'#0a0003', shapeStroke:'#ff2244', shapeShadow:'#cc0022', shapeFill:'rgba(28,0,7,.55)',    dotFill:'#ff8899', dotShadow:'#cc0022', tick:'rgba(204,0,34,.22)',    accent:'#ff2244', glow15:'rgba(255,34,68,.15)',    glow70:'rgba(255,34,68,.70)',    panel:'#060002', panelBorder:'#130007', trackEmpty:'#130007' },
+    { id:'lava',   name:'Lava',   swatch:'#ff3300', bg1:'#280800', bg2:'#130300', shapeStroke:'#ff5522', shapeShadow:'#ff3300', shapeFill:'rgba(50,8,0,.55)',    dotFill:'#ffaa77', dotShadow:'#ff3300', tick:'rgba(255,51,0,.22)',    accent:'#ff5522', glow15:'rgba(255,85,34,.15)',    glow70:'rgba(255,85,34,.70)',    panel:'#0f0100', panelBorder:'#240600', trackEmpty:'#240600' },
+    { id:'ember',  name:'Ember',  swatch:'#ff7700', bg1:'#201000', bg2:'#0f0800', shapeStroke:'#ffaa44', shapeShadow:'#ff7700', shapeFill:'rgba(32,14,0,.55)',   dotFill:'#ffcc88', dotShadow:'#ff7700', tick:'rgba(255,119,0,.22)',   accent:'#ffaa44', glow15:'rgba(255,170,68,.15)',   glow70:'rgba(255,170,68,.70)',   panel:'#0b0500', panelBorder:'#1c0a00', trackEmpty:'#1c0a00' },
+    { id:'gold',   name:'Gold',   swatch:'#ffcc00', bg1:'#1a1200', bg2:'#0c0900', shapeStroke:'#ffd700', shapeShadow:'#ffcc00', shapeFill:'rgba(28,18,0,.55)',   dotFill:'#fff0aa', dotShadow:'#ffcc00', tick:'rgba(255,204,0,.22)',   accent:'#ffd700', glow15:'rgba(255,215,0,.15)',    glow70:'rgba(255,215,0,.70)',    panel:'#070500', panelBorder:'#160f00', trackEmpty:'#160f00' },
+    { id:'toxic',  name:'Toxic',  swatch:'#aaff00', bg1:'#091400', bg2:'#040a00', shapeStroke:'#ccff44', shapeShadow:'#aaff00', shapeFill:'rgba(8,18,0,.55)',    dotFill:'#ddff88', dotShadow:'#aaff00', tick:'rgba(170,255,0,.22)',   accent:'#ccff44', glow15:'rgba(204,255,68,.15)',   glow70:'rgba(204,255,68,.70)',   panel:'#030600', panelBorder:'#091100', trackEmpty:'#091100' },
+    { id:'forest', name:'Forest', swatch:'#00dd66', bg1:'#0a2010', bg2:'#050f08', shapeStroke:'#44ffaa', shapeShadow:'#00dd66', shapeFill:'rgba(0,20,10,.55)',   dotFill:'#88ffcc', dotShadow:'#00dd66', tick:'rgba(0,220,102,.22)',   accent:'#44ffaa', glow15:'rgba(68,255,170,.15)',   glow70:'rgba(68,255,170,.70)',   panel:'#040e05', panelBorder:'#0a1f0c', trackEmpty:'#0a1f0c' },
+    { id:'mint',   name:'Mint',   swatch:'#00ffcc', bg1:'#061a14', bg2:'#030d0a', shapeStroke:'#44ffee', shapeShadow:'#00ffcc', shapeFill:'rgba(2,18,12,.55)',   dotFill:'#aaffee', dotShadow:'#00ffcc', tick:'rgba(0,255,204,.22)',   accent:'#44ffee', glow15:'rgba(68,255,238,.15)',   glow70:'rgba(68,255,238,.70)',   panel:'#020806', panelBorder:'#061510', trackEmpty:'#061510' },
+    { id:'cyber',  name:'Cyber',  swatch:'#00d4ff', bg1:'#1a2850', bg2:'#0a0f25', shapeStroke:'#22ccff', shapeShadow:'#00d4ff', shapeFill:'rgba(10,25,60,.55)',  dotFill:'#88eeff', dotShadow:'#00d4ff', tick:'rgba(0,180,255,.22)',   accent:'#00d4ff', glow15:'rgba(0,212,255,.15)',    glow70:'rgba(0,212,255,.70)',    panel:'#07071a', panelBorder:'#111128', trackEmpty:'#1a2a40' },
+    { id:'ice',    name:'Ice',    swatch:'#88ddff', bg1:'#081825', bg2:'#030a10', shapeStroke:'#aaeeff', shapeShadow:'#88ddff', shapeFill:'rgba(4,12,25,.55)',   dotFill:'#ddf5ff', dotShadow:'#88ddff', tick:'rgba(136,221,255,.22)', accent:'#aaeeff', glow15:'rgba(170,238,255,.15)',  glow70:'rgba(170,238,255,.70)',  panel:'#020608', panelBorder:'#091420', trackEmpty:'#091420' },
     { id:'ocean',  name:'Ocean',  swatch:'#0088ff', bg1:'#001830', bg2:'#000d18', shapeStroke:'#44aaff', shapeShadow:'#0088ff', shapeFill:'rgba(0,15,30,.55)',   dotFill:'#88ccff', dotShadow:'#0088ff', tick:'rgba(0,136,255,.22)',   accent:'#44aaff', glow15:'rgba(68,170,255,.15)',   glow70:'rgba(68,170,255,.70)',   panel:'#00080f', panelBorder:'#001525', trackEmpty:'#001525' },
-    { id:'sakura', name:'Sakura', swatch:'#ff66aa', bg1:'#1f0a15', bg2:'#0f0508', shapeStroke:'#ff88bb', shapeShadow:'#ff66aa', shapeFill:'rgba(30,5,15,.55)',   dotFill:'#ffbbdd', dotShadow:'#ff66aa', tick:'rgba(255,102,170,.22)', accent:'#ff88bb', glow15:'rgba(255,136,187,.15)',  glow70:'rgba(255,136,187,.70)',  panel:'#0a0407', panelBorder:'#1a0810', trackEmpty:'#1a0810' },
+    { id:'violet', name:'Violet', swatch:'#6644ff', bg1:'#0a0528', bg2:'#060212', shapeStroke:'#8866ff', shapeShadow:'#6644ff', shapeFill:'rgba(8,4,30,.55)',    dotFill:'#ccaaff', dotShadow:'#6644ff', tick:'rgba(102,68,255,.22)',  accent:'#8866ff', glow15:'rgba(136,102,255,.15)',  glow70:'rgba(136,102,255,.70)',  panel:'#030012', panelBorder:'#0a0520', trackEmpty:'#0a0520' },
+    { id:'galaxy', name:'Galaxy', swatch:'#9944ff', bg1:'#0a001e', bg2:'#05000f', shapeStroke:'#bb66ff', shapeShadow:'#9944ff', shapeFill:'rgba(14,0,28,.55)',   dotFill:'#ddaaff', dotShadow:'#9944ff', tick:'rgba(153,68,255,.22)',  accent:'#bb66ff', glow15:'rgba(187,102,255,.15)',  glow70:'rgba(187,102,255,.70)',  panel:'#030008', panelBorder:'#0a0018', trackEmpty:'#0a0018' },
+    { id:'neon',   name:'Neon',   swatch:'#ff00ff', bg1:'#1a0030', bg2:'#0a0018', shapeStroke:'#ff44ff', shapeShadow:'#ff00ff', shapeFill:'rgba(30,0,50,.55)',   dotFill:'#ffaaff', dotShadow:'#ff00ff', tick:'rgba(255,0,255,.22)',   accent:'#ff44ff', glow15:'rgba(255,68,255,.15)',   glow70:'rgba(255,68,255,.70)',   panel:'#090011', panelBorder:'#1c0030', trackEmpty:'#1c0030' },
+    { id:'sakura', name:'Sakura', swatch:'#ff55aa', bg1:'#1f0a15', bg2:'#0f0508', shapeStroke:'#ff88bb', shapeShadow:'#ff55aa', shapeFill:'rgba(30,5,15,.55)',   dotFill:'#ffbbdd', dotShadow:'#ff55aa', tick:'rgba(255,85,170,.22)',  accent:'#ff88bb', glow15:'rgba(255,136,187,.15)',  glow70:'rgba(255,136,187,.70)',  panel:'#0a0407', panelBorder:'#1a0810', trackEmpty:'#1a0810' },
 ];
 let currentTheme = THEMES[0];
 
-// Pre-rendered background — rebuilt on theme change
+// ── Ball color themes ──────────────────────────────────────────
+const BALL_THEMES = [
+    // Color-wheel order: red → orange → amber → yellow → lime → teal → blue → indigo → purple → magenta → pink → pearl/random
+    { id:'blood2',   name:'Blood',    swatch:'#aa0015', getHSL:()=>({ h:345+Math.random()*25,     s:85+Math.random()*15, l:32+Math.random()*18 }) },
+    { id:'fireball', name:'Fire',     swatch:'#ff4400', getHSL:()=>({ h:Math.random()*42,         s:92+Math.random()*8,  l:50+Math.random()*18 }) },
+    { id:'copper',   name:'Copper',   swatch:'#dd7722', getHSL:()=>({ h:22+Math.random()*16,      s:72+Math.random()*25, l:45+Math.random()*20 }) },
+    { id:'amber',    name:'Amber',    swatch:'#ffbb00', getHSL:()=>({ h:40+Math.random()*16,      s:92+Math.random()*8,  l:52+Math.random()*18 }) },
+    { id:'acid',     name:'Acid',     swatch:'#bbff00', getHSL:()=>({ h:72+Math.random()*38,      s:90+Math.random()*10, l:50+Math.random()*15 }) },
+    { id:'aurora',   name:'Aurora',   swatch:'#00ffbb', getHSL:()=>({ h:155+Math.random()*35,     s:82+Math.random()*18, l:52+Math.random()*20 }) },
+    { id:'iceball',  name:'Ice',      swatch:'#44bbff', getHSL:()=>({ h:198+Math.random()*38,     s:65+Math.random()*28, l:55+Math.random()*22 }) },
+    { id:'cosmos',   name:'Cosmos',   swatch:'#4422ee', getHSL:()=>({ h:248+Math.random()*50,     s:80+Math.random()*20, l:42+Math.random()*25 }) },
+    { id:'twilight', name:'Twilight', swatch:'#9922cc', getHSL:()=>({ h:288+Math.random()*45,     s:68+Math.random()*28, l:45+Math.random()*22 }) },
+    { id:'neonball', name:'Neon',     swatch:'#ff00ff', getHSL:()=>({ h:Math.random()*360,        s:95+Math.random()*5,  l:50+Math.random()*12 }) },
+    { id:'candy',    name:'Candy',    swatch:'#ff3399', getHSL:()=>({ h:315+Math.random()*55,     s:82+Math.random()*18, l:55+Math.random()*16 }) },
+    { id:'pastel',   name:'Pastel',   swatch:'#ffbbee', getHSL:()=>({ h:Math.random()*360,        s:38+Math.random()*28, l:72+Math.random()*18 }) },
+    { id:'rainbow',  name:'Rainbow',  swatch:'#ff4499', getHSL:()=>({ h:Math.random()*360,        s:92+Math.random()*8,  l:52+Math.random()*12 }) },
+    { id:'standard', name:'Pearl',    swatch:'#eeeeff', getHSL:()=>({ h:Math.random()*360,        s:8+Math.random()*22,  l:72+Math.random()*20 }) },
+];
+let currentBallTheme = BALL_THEMES[0];
+
+// ── Background/fog themes ──────────────────────────────────────
+const FOG_THEMES = [
+    // Color-wheel order: none → red → rust → orange → yellow → lime → teal → blue → slate → purple → dark-purple → pink → cycle
+    { id:'standard',  name:'Standard',  swatch:'#888899', tint:null },
+    { id:'bloodfog',  name:'Blood',     swatch:'#cc1122', tint:'180,0,15' },
+    { id:'rust',      name:'Rust',      swatch:'#cc4400', tint:'150,55,0' },
+    { id:'fire',      name:'Fire',      swatch:'#ff6600', tint:'160,55,0' },
+    { id:'solar',     name:'Solar',     swatch:'#ffaa00', tint:'210,110,0' },
+    { id:'acidfog',   name:'Acid',      swatch:'#99ee00', tint:'100,160,0' },
+    { id:'aurora',    name:'Aurora',    swatch:'#00cc77', tint:'0,180,100' },
+    { id:'ocean',     name:'Ocean',     swatch:'#0077cc', tint:'0,40,120' },
+    { id:'steel',     name:'Steel',     swatch:'#667788', tint:'18,28,52' },
+    { id:'void',      name:'Void',      swatch:'#220044', tint:'20,0,50' },
+    { id:'galaxy',    name:'Galaxy',    swatch:'#7733ee', tint:'55,10,140' },
+    { id:'sakura',    name:'Sakura',    swatch:'#ff66aa', tint:'255,100,155' },
+    { id:'rainbow',   name:'Rainbow',   swatch:'#ff4422', tint:'cycle' },
+    { id:'firework',  name:'Firework',  swatch:'#ffaaff', tint:'fast' },
+];
+let currentFogTheme = FOG_THEMES[0];
+let bgFade = 0, trailLength = 0, frameCount = 0;
+
+// ── Background canvas ──────────────────────────────────────────
 const bgCanvas = document.createElement('canvas');
 bgCanvas.width = W; bgCanvas.height = H;
 const bgCtx = bgCanvas.getContext('2d');
+
 function rebuildBgCanvas() {
     const gr = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, SHAPE_R * 1.4);
     gr.addColorStop(0, currentTheme.bg1);
@@ -231,36 +569,231 @@ function rebuildBgCanvas() {
     bgCtx.fillRect(0, 0, W, H);
 }
 rebuildBgCanvas();
-
-// Ensure canvas is rendered on first frame
 ctx.drawImage(bgCanvas, 0, 0);
 
-// ── Shapes ────────────────────────────────────────────────────
+// ── Computed shape point generators ───────────────────────────
+function makeGearPts(teeth = 8, outer = 1.0, inner = 0.72) {
+    const step = Math.PI * 2 / teeth, half = step * 0.25;
+    const pts = [];
+    for (let i = 0; i < teeth; i++) {
+        const c = i * step - Math.PI / 2;
+        pts.push([Math.cos(c - half) * inner, Math.sin(c - half) * inner]);
+        pts.push([Math.cos(c - half) * outer, Math.sin(c - half) * outer]);
+        pts.push([Math.cos(c + half) * outer, Math.sin(c + half) * outer]);
+        pts.push([Math.cos(c + half) * inner, Math.sin(c + half) * inner]);
+    }
+    return pts;
+}
+
+function makeCrescentPts() {
+    const outerR = 1.0, innerR = 0.72, dx = -0.38;
+    const ix = (1 + dx * dx - innerR * innerR) / (2 * dx);
+    const iy = Math.sqrt(Math.max(0, 1 - ix * ix));
+    const pts = [];
+    const a0 = Math.atan2(-iy, ix), a1 = Math.atan2(iy, ix);
+    let span = a1 - a0; if (span <= 0) span += Math.PI * 2;
+    for (let i = 0; i <= 10; i++) {
+        const a = a0 + span * i / 10;
+        pts.push([Math.cos(a) * outerR, Math.sin(a) * outerR]);
+    }
+    const b0 = Math.atan2(iy, ix - dx), b1 = Math.atan2(-iy, ix - dx);
+    let ispan = b1 - b0; if (ispan <= 0) ispan += Math.PI * 2;
+    for (let i = 0; i <= 6; i++) {
+        const a = b0 + ispan * i / 6;
+        pts.push([dx + Math.cos(a) * innerR, Math.sin(a) * innerR]);
+    }
+    return pts;
+}
+
+// ── Shape definitions ──────────────────────────────────────────
 const SHAPES = [
-    { sides:3,  star:false, label:'Triangle',  sa:-Math.PI/2 },
-    { sides:4,  star:false, label:'Square',    sa:-Math.PI/4 },
-    { sides:5,  star:false, label:'Pentagon',  sa:-Math.PI/2 },
-    { sides:6,  star:false, label:'Hexagon',   sa:-Math.PI/3 },
-    { sides:7,  star:false, label:'Heptagon',  sa:-Math.PI/2 },
-    { sides:8,  star:false, label:'Octagon',   sa:-3*Math.PI/8 },
-    { sides:9,  star:false, label:'Nonagon',   sa:-Math.PI/2 },
-    { sides:10, star:false, label:'Decagon',   sa:-2*Math.PI/5 },
-    { sides:12, star:false, label:'Dodecagon', sa:-5*Math.PI/12 },
-    { sides:3,  star:true,  label:'3-Star',    sa:-Math.PI/2,  ir:0.25 },
-    { sides:4,  star:true,  label:'4-Star',    sa:-Math.PI/2,  ir:0.38 },
-    { sides:5,  star:true,  label:'5-Star',    sa:-Math.PI/2,  ir:0.382 },
-    { sides:6,  star:true,  label:'6-Star',    sa:-Math.PI/2,  ir:0.50 },
-    { sides:7,  star:true,  label:'7-Star',    sa:-Math.PI/2,  ir:0.35 },
-    { sides:8,  star:true,  label:'8-Star',    sa:-Math.PI/2,  ir:0.40 },
-    { sides:0,  star:false, label:'Circle',    sa:0 },
+    // Row 1 — polygons + tight stars
+    { sides:3,  star:false, label:'Triangle', sa:-Math.PI/2 },
+    { sides:4,  star:false, label:'Square',   sa:-Math.PI/4 },
+    { sides:5,  star:false, label:'Pentagon', sa:-Math.PI/2 },
+    { sides:6,  star:false, label:'Hexagon',  sa:-Math.PI/3 },
+    { sides:8,  star:false, label:'Octagon',  sa:-3*Math.PI/8 },
+    { sides:12, star:false, label:'12-gon',   sa:-Math.PI/12 },
+    { sides:3,  star:true,  label:'3-Star',   sa:-Math.PI/2, ir:0.25 },
+    { sides:5,  star:true,  label:'5-Star',   sa:-Math.PI/2, ir:0.382 },
+    // Row 2 — more stars + wild geometric
+    { sides:6,  star:true,  label:'6-Star',   sa:-Math.PI/2, ir:0.50 },
+    { sides:8,  star:true,  label:'8-Star',   sa:-Math.PI/2, ir:0.40 },
+    { sides:0,  star:false, label:'Circle',   sa:0 },
+    { custom:true, label:'Gear',      sa:0, pts: makeGearPts() },
+    { custom:true, label:'Lightning', sa:0, pts:[
+        [ 0.10,-1.00],[ 0.55,-0.15],[ 0.90,-0.15],
+        [ 0.00, 0.05],[ 0.45, 0.05],
+        [-0.10, 1.00],[-0.55, 0.15],[-0.90, 0.15],
+        [ 0.00,-0.05],[-0.45,-0.05],
+    ]},
+    { custom:true, label:'Arrow',     sa:0, pts:[
+        [ 0.00,-1.00],[ 0.65,-0.20],[ 0.28,-0.20],
+        [ 0.28, 1.00],[-0.28, 1.00],[-0.28,-0.20],[-0.65,-0.20],
+    ]},
+    { custom:true, label:'Crescent',  sa:0, pts: makeCrescentPts() },
+    { custom:true, label:'Shield',    sa:0, pts:[
+        [-0.85,-1.00],[ 0.85,-1.00],[ 0.85, 0.25],[ 0.00, 1.00],[-0.85, 0.25],
+    ]},
+    // Row 3 — customs (icons now fixed) + new characters
+    { custom:true, label:'Ghost', sa:0, pts:[
+        [0,-1],[0.62,-0.72],[0.88,-0.08],[0.72,0.38],
+        [0.88,0.65],[0.55,0.50],[0.28,0.65],[0,0.50],
+        [-0.28,0.65],[-0.55,0.50],[-0.88,0.65],
+        [-0.72,0.38],[-0.88,-0.08],[-0.62,-0.72],
+    ]},
+    { custom:true, label:'Cat', sa:0, pts:[
+        [0,-0.88],[0.28,-0.78],[0.55,-1.05],[0.76,-0.68],
+        [0.92,-0.10],[0.88,0.52],[0.48,0.88],[0,0.95],
+        [-0.48,0.88],[-0.88,0.52],[-0.92,-0.10],
+        [-0.76,-0.68],[-0.55,-1.05],[-0.28,-0.78],
+    ]},
+    { custom:true, label:'Pac-Man', sa:0, pts:[
+        [0.819,-0.574],[0,0],[0.819,0.574],
+        [0.583,0.812],[0.280,0.960],[-0.052,0.999],
+        [-0.379,0.925],[-0.665,0.747],[-0.875,0.485],
+        [-0.987,0.165],[-0.987,-0.165],[-0.875,-0.485],
+        [-0.665,-0.747],[-0.379,-0.925],[-0.052,-0.999],
+        [0.280,-0.960],[0.583,-0.812],
+    ]},
+    { custom:true, label:'Heart', sa:0, pts:[
+        [0,-0.52],[0.52,-1.0],[0.98,-0.55],[1.0,0.08],
+        [0.72,0.52],[0.38,0.82],[0,1.0],
+        [-0.38,0.82],[-0.72,0.52],[-1.0,0.08],
+        [-0.98,-0.55],[-0.52,-1.0],
+    ]},
+    { custom:true, label:'Crown', sa:0, pts:[
+        [-1.0,0.75],[-1.0,-0.05],[-0.8,-0.70],[-0.6,-0.05],
+        [-0.4,-0.82],[-0.2,-0.05],[0,-1.0],
+        [0.2,-0.05],[0.4,-0.82],[0.6,-0.05],
+        [0.8,-0.70],[1.0,-0.05],[1.0,0.75],
+    ]},
+    { custom:true, label:'Skull', sa:0, pts:[
+        [-0.55,-1.00],[ 0.55,-1.00],[ 0.92,-0.55],[ 0.95, 0.10],
+        [ 0.65, 0.55],[ 0.38, 0.55],[ 0.38, 0.95],
+        [ 0.10, 0.95],[ 0.10, 0.55],[-0.10, 0.55],[-0.10, 0.95],
+        [-0.38, 0.95],[-0.38, 0.55],[-0.65, 0.55],
+        [-0.95, 0.10],[-0.92,-0.55],
+    ]},
+    { custom:true, label:'Fish', sa:0, pts:[
+        [-1.00, 0.00],[-0.65, 0.45],[-0.25, 0.25],[ 0.50, 0.60],
+        [ 1.00, 0.00],[ 0.50,-0.60],[-0.25,-0.25],[-0.65,-0.45],
+    ]},
+    { custom:true, label:'Rocket', sa:0, pts:[
+        [ 0.00,-1.00],[ 0.30,-0.40],[ 0.30, 0.45],[ 0.65, 0.80],
+        [ 0.65, 1.00],[ 0.30, 0.80],[ 0.00, 0.70],
+        [-0.30, 0.80],[-0.65, 1.00],[-0.65, 0.80],
+        [-0.30, 0.45],[-0.30,-0.40],
+    ]},
+    // Row 4 — extra wild
+    { sides:16, star:false, label:'16-gon',   sa:-Math.PI/16 },
+    { sides:4,  star:true,  label:'4-Star',   sa:Math.PI/4, ir:0.32 },
+    { sides:12, star:true,  label:'Sun',      sa:-Math.PI/12, ir:0.28 },
+    { custom:true, label:'Hourglass', sa:0, pts:[
+        [-1.00,-1.00],[ 1.00,-1.00],[ 0.06, 0.00],[ 1.00, 1.00],
+        [-1.00, 1.00],[-0.06, 0.00],
+    ]},
+    { custom:true, label:'Flame', sa:0, pts:[
+        [ 0.00,-1.00],[ 0.28,-0.45],[ 0.60, 0.10],[ 0.82, 0.55],
+        [ 0.62, 0.88],[ 0.30, 0.65],[ 0.42, 0.85],[ 0.00, 0.62],
+        [-0.42, 0.85],[-0.30, 0.65],[-0.62, 0.88],
+        [-0.82, 0.55],[-0.60, 0.10],[-0.28,-0.45],
+    ]},
+    { custom:true, label:'Bat', sa:0, pts:[
+        [ 0.00, 0.20],[ 0.25,-0.05],[ 0.42, 0.28],[ 0.58,-0.08],
+        [ 0.88,-0.52],[ 1.00,-0.12],[ 0.82, 0.08],[ 0.55, 0.08],
+        [ 0.22, 0.55],[ 0.12, 0.95],[ 0.00, 0.72],[-0.12, 0.95],
+        [-0.22, 0.55],[-0.55, 0.08],[-0.82, 0.08],[-1.00,-0.12],
+        [-0.88,-0.52],[-0.58,-0.08],[-0.42, 0.28],[-0.25,-0.05],
+    ]},
+    { custom:true, label:'Bell', sa:0, pts:[
+        [-0.50,-1.00],[ 0.50,-1.00],[ 0.50,-0.75],[ 0.82,-0.18],
+        [ 1.00, 0.32],[ 0.80, 0.75],[ 0.40, 0.88],[ 0.18, 0.68],
+        [ 0.18, 1.00],[-0.18, 1.00],[-0.18, 0.68],[-0.40, 0.88],
+        [-0.80, 0.75],[-1.00, 0.32],[-0.82,-0.18],[-0.50,-0.75],
+    ]},
+    { custom:true, label:'Cloud', sa:0, pts:[
+        [-1.00, 0.12],[-0.88,-0.15],[-0.62,-0.38],[-0.30,-0.42],
+        [-0.12,-0.72],[ 0.18,-0.82],[ 0.48,-0.68],[ 0.68,-0.32],
+        [ 0.88,-0.12],[ 1.00, 0.12],[ 1.00, 0.70],[-1.00, 0.70],
+    ]},
 ];
 let currentShape = SHAPES[3];
 
-// ── Audio ─────────────────────────────────────────────────────
+// ── Cross shape generators ─────────────────────────────────────
+function makeSnowflakePts() {
+    const pts = [];
+    const arms = 6, step = Math.PI * 2 / arms, sa = -Math.PI / 2;
+    for (let i = 0; i < arms; i++) {
+        const a = sa + i * step;
+        const px = Math.sin(a), py = -Math.cos(a);
+        pts.push([Math.cos(a - Math.PI/6) * 0.65, Math.sin(a - Math.PI/6) * 0.65]);
+        pts.push([Math.cos(a) * 0.58 + px * 0.09,  Math.sin(a) * 0.58 + py * 0.09]);
+        pts.push([Math.cos(a),                      Math.sin(a)]);
+        pts.push([Math.cos(a) * 0.58 - px * 0.09,  Math.sin(a) * 0.58 - py * 0.09]);
+        pts.push([Math.cos(a + Math.PI/6) * 0.65,  Math.sin(a + Math.PI/6) * 0.65]);
+        pts.push([Math.cos(a + step/2) * 0.15,     Math.sin(a + step/2) * 0.15]);
+    }
+    return pts;
+}
+
+function makePinwheelPts() {
+    const pts = [];
+    const arms = 4, step = Math.PI * 2 / arms, sa = -Math.PI / 2;
+    const sw = Math.PI / 6, hw = 0.22, nearR = 0.12;
+    for (let i = 0; i < arms; i++) {
+        const a = sa + i * step, aS = a + sw;
+        const px = -Math.sin(aS), py = Math.cos(aS);
+        pts.push([Math.cos(a) * nearR + px * hw, Math.sin(a) * nearR + py * hw]);
+        pts.push([Math.cos(aS)         + px * hw, Math.sin(aS)         + py * hw]);
+        pts.push([Math.cos(aS)         - px * hw, Math.sin(aS)         - py * hw]);
+        pts.push([Math.cos(a) * nearR - px * hw, Math.sin(a) * nearR - py * hw]);
+    }
+    return pts;
+}
+
+function makeStarCrossPts() {
+    const pts = [];
+    const arms = 4, step = Math.PI * 2 / arms, sa = -Math.PI / 2;
+    for (let i = 0; i < arms; i++) {
+        const a = sa + i * step;
+        const px = Math.sin(a), py = -Math.cos(a);
+        pts.push([Math.cos(a) * 0.12 + px * 0.12, Math.sin(a) * 0.12 + py * 0.12]);
+        pts.push([Math.cos(a) * 0.82 + px * 0.50, Math.sin(a) * 0.82 + py * 0.50]);
+        pts.push([Math.cos(a),                     Math.sin(a)]);
+        pts.push([Math.cos(a) * 0.82 - px * 0.50, Math.sin(a) * 0.82 - py * 0.50]);
+        pts.push([Math.cos(a) * 0.12 - px * 0.12, Math.sin(a) * 0.12 - py * 0.12]);
+    }
+    return pts;
+}
+
+// ── Cross shape definitions ────────────────────────────────────
+const CROSS_SHAPES = [
+    { arms:4,  armWidth:0.18, label:'Plus',     sa:-Math.PI/2 },
+    { arms:4,  armWidth:0.33, label:'Fat Plus', sa:-Math.PI/2 },
+    { arms:4,  armWidth:0.18, label:'X',        sa:-Math.PI/4 },
+    { arms:4,  armWidth:0.33, label:'Fat X',    sa:-Math.PI/4 },
+    { arms:3,  armWidth:0.25, label:'Y',        sa:-Math.PI/2 },
+    { arms:3,  armWidth:0.42, label:'Fat Y',    sa:-Math.PI/2 },
+    { arms:6,  armWidth:0.18, label:'6-Cross',  sa:0 },
+    { arms:6,  armWidth:0.28, label:'Wide 6',   sa:0 },
+    { arms:8,  armWidth:0.12, label:'8-Cross',  sa:0 },
+    { arms:8,  armWidth:0.20, label:'Wide 8',   sa:0 },
+    { arms:5,  armWidth:0.18, label:'5-Cross',  sa:-Math.PI/2 },
+    { arms:12, armWidth:0.09, label:'12-Cross', sa:0 },
+    { arms:10, armWidth:0.08, label:'10-Cross', sa:0 },
+    { arms:10, armWidth:0.14, label:'Wide 10',  sa:0 },
+    { arms:7,  armWidth:0.14, label:'7-Cross',  sa:-Math.PI/2 },
+    { custom:true, label:'Snowflake', pts: makeSnowflakePts() },
+    { custom:true, label:'Pinwheel',  pts: makePinwheelPts() },
+    { custom:true, label:'StarCross', pts: makeStarCrossPts() },
+];
+let currentCrossShape = CROSS_SHAPES[0];
+
+// ── Audio ──────────────────────────────────────────────────────
 let audioCtx = null, masterGain = null, ballGain = null, reverbNode = null;
 let audioMuted = false, ballSoundMuted = false;
-let audioVol = 0.15, audioStarted = false;
-let ballSoundVol = 0.02;
+let audioVol = 0.10, audioStarted = false, ballSoundVol = 0.02;
 let soundsThisFrame = 0;
 const MAX_SOUNDS_PER_FRAME = 3;
 let noiseBuffer = null;
@@ -279,7 +812,7 @@ function startAudio() {
     try {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        const revSec = 1.6, revLen = Math.floor(audioCtx.sampleRate * revSec);
+        const revLen = Math.floor(audioCtx.sampleRate * 1.6);
         const revBuf = audioCtx.createBuffer(2, revLen, audioCtx.sampleRate);
         for (let ch = 0; ch < 2; ch++) {
             const d = revBuf.getChannelData(ch);
@@ -315,60 +848,77 @@ function startAudio() {
             osc.start();
         });
 
-        const pad = audioCtx.createOscillator();
-        const padGain = audioCtx.createGain();
         const lfo = audioCtx.createOscillator();
         const lfoGain = audioCtx.createGain();
-        pad.type = 'triangle'; pad.frequency.value = 130.8;
-        padGain.gain.value = 0.025;
-        lfo.frequency.value = 0.25; lfoGain.gain.value = 0.018;
-        lfo.connect(lfoGain); lfoGain.connect(padGain.gain);
-        pad.connect(padGain); padGain.connect(reverbNode);
-        pad.start(); lfo.start();
+        lfo.frequency.value = 0.33; lfoGain.gain.value = 0.028;
+        lfo.connect(lfoGain); lfo.start();
+
+        [[130.8, 0.022], [196.0, 0.016], [261.6, 0.011]].forEach(([freq, gain]) => {
+            const p1 = audioCtx.createOscillator(), p2 = audioCtx.createOscillator();
+            const pg = audioCtx.createGain();
+            p1.type = p2.type = 'sawtooth';
+            p1.frequency.value = freq; p2.frequency.value = freq * 1.004;
+            pg.gain.value = gain;
+            lfoGain.connect(pg.gain);
+            p1.connect(pg); p2.connect(pg); pg.connect(reverbNode);
+            p1.start(); p2.start();
+        });
 
         noiseBuffer = makeNoiseBuffer();
         scheduleBeat();
         scheduleMelody(delay);
-    } catch(e) { console.warn('Audio unavailable', e); }
+    } catch (e) { console.warn('Audio unavailable', e); }
 }
 
-const SCALE = [130.8, 146.8, 164.8, 196, 220, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3, 784];
+const SCALE = [130.8, 146.8, 164.8, 196, 220, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3, 784, 880, 1046.5];
 
 function playNote(dest, freq, vol = 0.075, dur = 0.75) {
     if (!audioCtx || audioMuted) return;
     const osc = audioCtx.createOscillator();
+    const filt = audioCtx.createBiquadFilter();
     const env = audioCtx.createGain();
-    osc.type = 'triangle'; osc.frequency.value = freq;
+    osc.type = 'sawtooth'; osc.frequency.value = freq;
+    filt.type = 'lowpass'; filt.frequency.value = Math.min(freq * 5, 8000); filt.Q.value = 2;
     const t = audioCtx.currentTime;
     env.gain.setValueAtTime(0, t);
-    env.gain.linearRampToValueAtTime(vol, t + 0.025);
+    env.gain.linearRampToValueAtTime(vol, t + 0.022);
     env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(env); env.connect(dest);
+    osc.connect(filt); filt.connect(env); env.connect(dest);
     osc.start(t); osc.stop(t + dur + 0.05);
 }
 
 function playKick() {
     if (!audioCtx || audioMuted) return;
-    const osc = audioCtx.createOscillator();
-    const env = audioCtx.createGain();
-    osc.type = 'sine';
+    const osc = audioCtx.createOscillator(), env = audioCtx.createGain();
     const t = audioCtx.currentTime;
-    osc.frequency.setValueAtTime(130, t);
-    osc.frequency.exponentialRampToValueAtTime(38, t + 0.2);
-    env.gain.setValueAtTime(0.6, t);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150, t);
+    osc.frequency.exponentialRampToValueAtTime(38, t + 0.22);
+    env.gain.setValueAtTime(0.75, t);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
     osc.connect(env); env.connect(masterGain);
-    osc.start(t); osc.stop(t + 0.32);
+    osc.start(t); osc.stop(t + 0.34);
+}
+
+function playBass() {
+    if (!audioCtx || audioMuted) return;
+    const osc = audioCtx.createOscillator(), env = audioCtx.createGain();
+    const t = audioCtx.currentTime;
+    osc.type = 'triangle'; osc.frequency.value = 65.4;
+    env.gain.setValueAtTime(0.28, t);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+    osc.connect(env); env.connect(masterGain);
+    osc.start(t); osc.stop(t + 0.46);
 }
 
 function playHihat(open) {
     if (!audioCtx || audioMuted || !noiseBuffer) return;
     const src = audioCtx.createBufferSource();
     src.buffer = noiseBuffer;
-    const hp = audioCtx.createBiquadFilter();
+    const hp  = audioCtx.createBiquadFilter();
     hp.type = 'highpass'; hp.frequency.value = 7500;
     const env = audioCtx.createGain();
-    const t = audioCtx.currentTime;
+    const t   = audioCtx.currentTime;
     const dur = open ? 0.14 : 0.035;
     env.gain.setValueAtTime(open ? 0.06 : 0.04, t);
     env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -376,14 +926,14 @@ function playHihat(open) {
     src.start(t);
 }
 
-const STEP_MS = 250;
+const STEP_MS    = 250;
 const KICK_STEPS = new Set([0, 4]);
 const OPEN_STEPS = new Set([2, 6]);
 let beatStep = 0;
 
 function scheduleBeat() {
     if (audioCtx && !audioMuted) {
-        if (KICK_STEPS.has(beatStep)) playKick();
+        if (KICK_STEPS.has(beatStep)) { playKick(); playBass(); }
         playHihat(OPEN_STEPS.has(beatStep));
     }
     beatStep = (beatStep + 1) % 8;
@@ -391,12 +941,14 @@ function scheduleBeat() {
 }
 
 function scheduleMelody(dest) {
-    playNote(dest, SCALE[Math.floor(Math.random() * SCALE.length)]);
-    if (Math.random() < 0.38) {
+    const freq = SCALE[Math.floor(Math.random() * SCALE.length)];
+    playNote(dest, freq);
+    if (Math.random() < 0.55) playNote(dest, freq * 1.5, 0.042, 0.55);
+    if (Math.random() < 0.42) {
         const idx = Math.floor(Math.random() * SCALE.length);
-        setTimeout(() => playNote(dest, SCALE[idx], 0.05, 0.6), 140);
+        setTimeout(() => playNote(dest, SCALE[idx], 0.05, 0.55), 130);
     }
-    setTimeout(() => scheduleMelody(dest), 350 + Math.random() * 700);
+    setTimeout(() => scheduleMelody(dest), 180 + Math.random() * 420);
 }
 
 function playBallHit(speed, ballX) {
@@ -409,7 +961,7 @@ function playBallHit(speed, ballX) {
     pan.pan.value = Math.max(-1, Math.min(1, (ballX - cx) / SHAPE_R));
     osc.type = 'sine';
     osc.frequency.value = Math.min(200 + speed * 38, 1800);
-    const t = audioCtx.currentTime;
+    const t   = audioCtx.currentTime;
     const vol = ballSoundVol * 0.22;
     env.gain.setValueAtTime(vol, t);
     env.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
@@ -418,62 +970,51 @@ function playBallHit(speed, ballX) {
 }
 
 const kickAudio = () => { startAudio(); audioCtx && audioCtx.resume(); };
-['pointerdown', 'keydown'].forEach(e => document.addEventListener(e, kickAudio, {once: true}));
+['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, kickAudio, { once: true }));
 
-// Deactivate audio when in background
 document.addEventListener('visibilitychange', () => {
     if (!audioCtx || !masterGain) return;
-    if (document.hidden) {
-        // Mute when going to background
-        if (!audioMuted) {
-            masterGain.gain.value = 0;
-        }
-    } else {
-        // Unmute when returning to foreground
-        if (!audioMuted) {
-            masterGain.gain.value = audioVol;
-        }
-    }
+    masterGain.gain.value = (!audioMuted && !document.hidden) ? audioVol : 0;
 });
 
-document.getElementById('muteBtn').addEventListener('click', function() {
+document.getElementById('muteBtn').addEventListener('click', function () {
     kickAudio();
     audioMuted = !audioMuted;
     if (masterGain) masterGain.gain.value = audioMuted ? 0 : audioVol;
     this.classList.toggle('muted', audioMuted);
+    saveSettings();
 });
 
-document.getElementById('ballMuteBtn').addEventListener('click', function() {
+document.getElementById('ballMuteBtn').addEventListener('click', function () {
     ballSoundMuted = !ballSoundMuted;
     if (ballGain) ballGain.gain.value = ballSoundMuted ? 0 : 1;
     this.classList.toggle('muted', ballSoundMuted);
+    saveSettings();
 });
 
 const sVolumeEl = document.getElementById('sVolume');
-sVolumeEl.addEventListener('input', function() {
+sVolumeEl.addEventListener('input', function () {
     kickAudio();
     audioVol = +this.value / 100;
     if (masterGain && !audioMuted) masterGain.gain.value = audioVol;
     trackBg(this);
+    saveSettings();
 });
 
-// ── Live physics params ───────────────────────────────────────
+// ── Physics state ──────────────────────────────────────────────
 let gravity = 0.13, maxBallSpeed = 15, spin = 0.013;
-let shapeAngle = 0;
+let shapeAngle = 0, INNER_R = SHAPE_R * 0.35;
+let innerShapeAngle = 0, innerSpin = 0.008;
 
-// ── Ball sprites ──────────────────────────────────────────────
-function makeBallSprite(h, s, l) {
-    const sz = Math.ceil(BALL_R * 2) + 2;
-    let oc;
-    if (typeof OffscreenCanvas !== 'undefined') {
-        oc = new OffscreenCanvas(sz, sz);
-    } else {
-        oc = document.createElement('canvas');
-        oc.width = oc.height = sz;
-    }
+// ── Ball sprites ───────────────────────────────────────────────
+function makeBallSprite(h, s, l, r) {
+    const sz  = Math.ceil(r * 2) + 2;
+    const oc  = (typeof OffscreenCanvas !== 'undefined')
+        ? new OffscreenCanvas(sz, sz)
+        : Object.assign(document.createElement('canvas'), { width: sz, height: sz });
     const oc2 = oc.getContext('2d');
-    const r = BALL_R, o = 1;
-    const gr = oc2.createRadialGradient(
+    const o   = 1;
+    const gr  = oc2.createRadialGradient(
         o + r - r * .32, o + r - r * .36, r * .06,
         o + r, o + r, r
     );
@@ -484,58 +1025,98 @@ function makeBallSprite(h, s, l) {
     oc2.arc(o + r, o + r, r, 0, Math.PI * 2);
     oc2.fillStyle = gr;
     oc2.fill();
+    // Asymmetric arc for visible spin
+    oc2.save();
+    oc2.beginPath();
+    oc2.arc(o + r, o + r, r - 0.5, 0, Math.PI * 2);
+    oc2.clip();
+    oc2.globalAlpha = 0.44;
+    oc2.strokeStyle = `hsl(${(h + 55) % 360},90%,90%)`;
+    oc2.lineWidth   = Math.max(0.7, r * 0.14);
+    oc2.lineCap     = 'round';
+    oc2.beginPath();
+    oc2.arc(o + r, o + r, r * 0.56, -Math.PI * 0.62, Math.PI * 0.28);
+    oc2.stroke();
+    oc2.restore();
     return oc;
 }
 
-// ── Ball factory ──────────────────────────────────────────────
+// ── Ball factory ───────────────────────────────────────────────
 function makeBall() {
     const a = Math.random() * Math.PI * 2;
     const d = Math.random() * SHAPE_R * 0.72;
-    const h = Math.random() * 360;
-    const s = 78 + Math.random() * 22;
-    const l = 55 + Math.random() * 15;
+    const { h, s, l } = currentBallTheme.getHSL();
+    const r = Math.max(1, BALL_R + (Math.random() * 2 - 1) * sizeRandomness * BALL_R * 0.15);
     return {
-        h, s, l,
+        h, s, l, r,
         x: cx + Math.cos(a) * d,
         y: cy + Math.sin(a) * d,
         vx: (Math.random() * 2 - 1) * 4,
         vy: (Math.random() * 2 - 1) * 4,
-        sprite: makeBallSprite(h, s, l),
+        omega: 0, angle: 0,
+        sprite: makeBallSprite(h, s, l, r),
     };
 }
-let balls = Array.from({length: 500}, makeBall);
-console.log(`[INIT] Created ${balls.length} balls, BALL_R=${BALL_R}, SHAPE_R=${SHAPE_R}`);
+let balls = Array.from({ length: 100 }, makeBall);
 
-// ── Shape icon grid ───────────────────────────────────────────
-const NS   = 'http://www.w3.org/2000/svg';
-const grid = document.getElementById('shape-grid');
+// ── SVG icon helpers ───────────────────────────────────────────
+const NS = 'http://www.w3.org/2000/svg';
+
+function iconCrossPoints(shape) {
+    const R = 13, O = 16;
+    if (shape.custom) {
+        return shape.pts.map(([nx, ny]) =>
+            `${(O + nx * R * 0.85).toFixed(2)},${(O + ny * R * 0.85).toFixed(2)}`
+        ).join(' ');
+    }
+    const { arms, armWidth, sa } = shape;
+    const wr = armWidth * R;
+    const step = 2 * Math.PI / arms, sinStep = Math.sin(step);
+    const pts = [];
+    for (let i = 0; i < arms; i++) {
+        const a = sa + i * step, b = a + step;
+        pts.push(`${(O + R * Math.cos(a) + wr * Math.sin(a)).toFixed(2)},${(O + R * Math.sin(a) - wr * Math.cos(a)).toFixed(2)}`);
+        pts.push(`${(O + R * Math.cos(a) - wr * Math.sin(a)).toFixed(2)},${(O + R * Math.sin(a) + wr * Math.cos(a)).toFixed(2)}`);
+        pts.push(`${(O + wr * (Math.cos(a) + Math.cos(b)) / sinStep).toFixed(2)},${(O + wr * (Math.sin(a) + Math.sin(b)) / sinStep).toFixed(2)}`);
+    }
+    return pts.join(' ');
+}
 
 function iconPoints(shape, R, ox, oy) {
-    const { sides, star, ir=0.4, sa } = shape;
+    if (shape.custom) {
+        const ca = Math.cos(shape.sa || 0), sinA = Math.sin(shape.sa || 0);
+        return shape.pts.map(([nx, ny]) => {
+            const rx = (nx * ca - ny * sinA) * R * 0.85;
+            const ry = (nx * sinA + ny * ca)  * R * 0.85;
+            return `${(ox + rx).toFixed(2)},${(oy + ry).toFixed(2)}`;
+        }).join(' ');
+    }
+    const { sides, star, ir = 0.4, sa } = shape;
     if (star) {
-        return Array.from({length: sides * 2}, (_, i) => {
+        return Array.from({ length: sides * 2 }, (_, i) => {
             const r = i % 2 === 0 ? R : R * ir;
             const a = sa + i * Math.PI / sides;
             return `${(ox + r * Math.cos(a)).toFixed(2)},${(oy + r * Math.sin(a)).toFixed(2)}`;
         }).join(' ');
     }
     const n = sides === 0 ? 48 : sides;
-    return Array.from({length: n}, (_, i) => {
+    return Array.from({ length: n }, (_, i) => {
         const a = sa + i * 2 * Math.PI / n;
         return `${(ox + R * Math.cos(a)).toFixed(2)},${(oy + R * Math.sin(a)).toFixed(2)}`;
     }).join(' ');
 }
 
+// ── Shape button grid ──────────────────────────────────────────
+const shapeGrid = document.getElementById('shape-grid');
+
 SHAPES.forEach(shape => {
     const btn = document.createElement('button');
     btn.className = 'shape-btn' + (shape === currentShape ? ' active' : '');
     btn.title = shape.label;
-
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('viewBox', '0 0 32 32');
-
     let el;
-    if (shape.sides === 0) {
+    if (!shape.custom && shape.sides === 0) {
         el = document.createElementNS(NS, 'circle');
         el.setAttribute('cx', '16'); el.setAttribute('cy', '16'); el.setAttribute('r', '13');
     } else {
@@ -544,69 +1125,237 @@ SHAPES.forEach(shape => {
     }
     svg.appendChild(el);
     btn.appendChild(svg);
-
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        shapeGrid.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentShape = shape;
         const verts = shapeVerts(shapeAngle);
-        for (const ball of balls) {
-            if (!insidePoly(ball.x, ball.y, verts)) respawnBall(ball);
-        }
+        balls.forEach(ball => { if (!insidePoly(ball.x, ball.y, verts)) respawnBall(ball); });
+        saveSettings();
     });
-    grid.appendChild(btn);
+    shapeGrid.appendChild(btn);
 });
 
-// ── Slider helper ─────────────────────────────────────────────
+// ── Settings ───────────────────────────────────────────────────
+const DEFAULTS = {
+    balls:100, ballSize:_defaultR, gravity:5, ballSpeed:5, shapeSpeed:5, shapeSize:47,
+    volume:10, ballSound:2, crossSize:35, crossSpeed:3,
+    bg:20, fogTrail:0, sizeRandomness:0,
+    shapeIdx:3, crossIdx:0,
+    themeId:'cyber', ballThemeId:'standard', fogThemeId:'standard',
+    audioMuted:false, ballSoundMuted:false,
+};
+
+let _suppressSave = false;
+
+function saveSettings() {
+    if (_suppressSave) return;
+    localStorage.setItem('bb', JSON.stringify({
+        balls:         +document.getElementById('sBalls').value,
+        ballSize:      +document.getElementById('sBallSize').value,
+        gravity:       +document.getElementById('sGravity').value,
+        ballSpeed:     +document.getElementById('sBallSpeed').value,
+        shapeSpeed:    +document.getElementById('sShapeSpeed').value,
+        shapeSize:     +document.getElementById('sShapeSize').value,
+        volume:        +document.getElementById('sVolume').value,
+        ballSound:     +document.getElementById('sBallSound').value,
+        crossSize:     +document.getElementById('sCrossSize').value,
+        crossSpeed:    +document.getElementById('sCrossSpeed').value,
+        bg:            +document.getElementById('sBg').value,
+        fogTrail:      +document.getElementById('sFogTrail').value,
+        sizeRandomness:+document.getElementById('sSizeRandom').value,
+        shapeIdx:      SHAPES.indexOf(currentShape),
+        crossIdx:      CROSS_SHAPES.indexOf(currentCrossShape),
+        themeId:       currentTheme.id,
+        ballThemeId:   currentBallTheme.id,
+        fogThemeId:    currentFogTheme.id,
+        audioMuted, ballSoundMuted,
+    }));
+}
+
+function applySettings(s) {
+    _suppressSave = true;
+    const set = (id, val) => {
+        if (val == null) return;
+        const el = document.getElementById(id);
+        if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
+    };
+    set('sBalls',       s.balls);
+    set('sBallSize',    s.ballSize);
+    set('sGravity',     s.gravity);
+    set('sBallSpeed',   s.ballSpeed);
+    set('sShapeSpeed',  s.shapeSpeed);
+    set('sShapeSize',   s.shapeSize);
+    set('sCrossSize',   s.crossSize);
+    set('sCrossSpeed',  s.crossSpeed);
+    set('sBg',          s.bg ?? s.fog);
+    set('sFogTrail',    s.fogTrail);
+    set('sSizeRandom',  s.sizeRandomness);
+    if (s.volume != null) {
+        const el = document.getElementById('sVolume');
+        el.value = s.volume; audioVol = s.volume / 100; trackBg(el);
+    }
+    if (s.ballSound != null) {
+        const el = document.getElementById('sBallSound');
+        el.value = s.ballSound; ballSoundVol = s.ballSound / 100; trackBg(el);
+    }
+    if (s.audioMuted != null && s.audioMuted !== audioMuted) {
+        audioMuted = s.audioMuted;
+        if (masterGain) masterGain.gain.value = audioMuted ? 0 : audioVol;
+        document.getElementById('muteBtn').classList.toggle('muted', audioMuted);
+    }
+    if (s.ballSoundMuted != null && s.ballSoundMuted !== ballSoundMuted) {
+        ballSoundMuted = s.ballSoundMuted;
+        if (ballGain) ballGain.gain.value = ballSoundMuted ? 0 : 1;
+        document.getElementById('ballMuteBtn').classList.toggle('muted', ballSoundMuted);
+    }
+    if (s.shapeIdx != null) shapeGrid.querySelectorAll('.shape-btn')[s.shapeIdx]?.click();
+    if (s.crossIdx != null) document.querySelectorAll('#cross-grid .shape-btn')[s.crossIdx]?.click();
+    if (s.themeId)    { const t = THEMES.find(x => x.id === s.themeId);       if (t) setTheme(t);          }
+    if (s.ballThemeId){ const t = BALL_THEMES.find(x => x.id === s.ballThemeId); if (t) setBallTheme(t, false); }
+    if (s.fogThemeId) { const t = FOG_THEMES.find(x => x.id === s.fogThemeId);   if (t) setFogTheme(t, false);  }
+    _suppressSave = false;
+}
+
+function loadSettings() {
+    try {
+        const s = JSON.parse(localStorage.getItem('bb'));
+        if (s) applySettings(s);
+    } catch (_) {}
+}
+
+// ── Slider helper ──────────────────────────────────────────────
 function trackBg(el) {
     const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
     el.style.background = `linear-gradient(to right,${currentTheme.accent} ${pct}%,${currentTheme.trackEmpty} ${pct}%)`;
 }
+
 function slider(id, valId, fn) {
-    const el = document.getElementById(id), vEl = document.getElementById(valId);
-    const upd = () => { vEl.textContent = el.value; trackBg(el); fn(+el.value); };
-    el.addEventListener('input', upd); upd();
+    const el  = document.getElementById(id);
+    const vEl = document.getElementById(valId);
+    const upd = () => { vEl.textContent = el.value; trackBg(el); fn(+el.value); saveSettings(); };
+    el.addEventListener('input', upd);
+    vEl.textContent = el.value; trackBg(el); fn(+el.value);
 }
 
 slider('sBalls',      'vBalls',      v => { while (balls.length < v) balls.push(makeBall()); balls.length = v; });
-slider('sBallSize',   'vBallSize',   v => {
-    BALL_R = v;
-    for (const ball of balls) ball.sprite = makeBallSprite(ball.h, ball.s, ball.l);
-});
+slider('sBallSize',   'vBallSize',   v => { BALL_R = v; balls.forEach(b => { b.r = clampedR(); b.sprite = makeBallSprite(b.h, b.s, b.l, b.r); }); });
+slider('sSizeRandom', 'vSizeRandom', v => { sizeRandomness = v; balls.forEach(b => { b.r = clampedR(); b.sprite = makeBallSprite(b.h, b.s, b.l, b.r); }); });
+slider('sBg',         'vBg',         v => { bgFade = v; });
+slider('sFogTrail',   'vFogTrail',   v => { trailLength = v; if (!v) balls.forEach(b => { b.trail = null; }); });
 slider('sGravity',    'vGravity',    v => { gravity = v * 0.026; });
 slider('sBallSpeed',  'vBallSpeed',  v => { maxBallSpeed = v * 3; });
 slider('sShapeSpeed', 'vShapeSpeed', v => { spin = v * 0.0026; });
-
-// Ball sound slider (no display span, just update the variable)
-document.getElementById('sBallSound').addEventListener('input', function() {
-    ballSoundVol = +this.value / 100;
-    trackBg(this);
+slider('sShapeSize',  'vShapeSize',  v => {
+    shapeSize = v;
+    SHAPE_R = (v / 100) * Math.min(W, H);
+    INNER_R = SHAPE_R * (+document.getElementById('sCrossSize').value / 100);
+    rebuildBgCanvas();
+    balls.forEach(respawnBall);
 });
 
+document.getElementById('sBallSound').addEventListener('input', function () {
+    ballSoundVol = +this.value / 100;
+    trackBg(this);
+    saveSettings();
+});
 trackBg(sVolumeEl);
 trackBg(document.getElementById('sBallSound'));
 
-// ── Physics ───────────────────────────────────────────────────
+function clampedR() {
+    return Math.max(1, BALL_R + (Math.random() * 2 - 1) * sizeRandomness * BALL_R * 0.15);
+}
+
+// ── Random Themes cycle ────────────────────────────────────────
+let _cycleTimer = null, _cycleActive = false;
+const rndThemesCycleBtn = document.getElementById('rndThemesCycle');
+
+function scheduleNextCycle() {
+    _cycleTimer = setTimeout(() => {
+        if (!_cycleActive) return;
+        _suppressSave = true;
+        setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
+        setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
+        setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
+        _suppressSave = false;
+        saveSettings();
+        scheduleNextCycle();
+    }, 20000 + Math.random() * 20000);
+}
+
+rndThemesCycleBtn.addEventListener('click', () => {
+    _cycleActive = !_cycleActive;
+    clearTimeout(_cycleTimer);
+    _cycleTimer = null;
+    rndThemesCycleBtn.classList.toggle('active', _cycleActive);
+    if (_cycleActive) scheduleNextCycle();
+});
+
+// ── Pause / Resume ─────────────────────────────────────────────
+const ICON_PAUSE = `<svg width="11" height="13" viewBox="0 0 11 13" fill="currentColor"><rect x="0.5" y="0.5" width="3.5" height="12" rx="1.5"/><rect x="7" y="0.5" width="3.5" height="12" rx="1.5"/></svg>`;
+const ICON_PLAY  = `<svg width="11" height="13" viewBox="0 0 11 13" fill="currentColor"><path d="M1.5 1 L10.5 6.5 L1.5 12 Z"/></svg>`;
+let paused = false;
+const pauseBtn = document.getElementById('pauseBtn');
+
+pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    pauseBtn.innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
+    pauseBtn.title     = paused ? 'Resume simulation' : 'Pause simulation';
+    pauseBtn.classList.toggle('paused', paused);
+});
+
+// ── Physics helpers ────────────────────────────────────────────
 function shapeVerts(angle) {
-    const { sides, star, ir=0.4 } = currentShape;
+    if (currentShape.custom) {
+        const { pts } = currentShape;
+        const ca = Math.cos(angle), sa = Math.sin(angle);
+        return pts.map(([nx, ny]) => ({
+            x: cx + (nx * ca - ny * sa) * SHAPE_R,
+            y: cy + (nx * sa + ny * ca) * SHAPE_R,
+        }));
+    }
+    const { sides, star, ir = 0.4 } = currentShape;
     const n = sides === 0 ? 48 : sides;
     if (star) {
-        return Array.from({length: n * 2}, (_, i) => {
+        return Array.from({ length: n * 2 }, (_, i) => {
             const r = i % 2 === 0 ? SHAPE_R : SHAPE_R * ir;
             const a = angle + i * Math.PI / n;
             return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
         });
     }
-    return Array.from({length: n}, (_, i) => ({
+    return Array.from({ length: n }, (_, i) => ({
         x: cx + SHAPE_R * Math.cos(angle + i * 2 * Math.PI / n),
         y: cy + SHAPE_R * Math.sin(angle + i * 2 * Math.PI / n),
     }));
 }
 
+function innerShapeVerts(angle) {
+    const shape = currentCrossShape;
+    const r = INNER_R;
+    if (shape.custom) {
+        const ca = Math.cos(angle), sa = Math.sin(angle);
+        return shape.pts.map(([nx, ny]) => ({
+            x: cx + (nx * ca - ny * sa) * r,
+            y: cy + (nx * sa + ny * ca) * r,
+        }));
+    }
+    const { arms, armWidth } = shape;
+    const wr = armWidth * r;
+    const step = 2 * Math.PI / arms, sinStep = Math.sin(step);
+    const verts = [];
+    for (let i = 0; i < arms; i++) {
+        const a = angle + i * step, b = a + step;
+        verts.push({ x: cx + r * Math.cos(a) + wr * Math.sin(a), y: cy + r * Math.sin(a) - wr * Math.cos(a) });
+        verts.push({ x: cx + r * Math.cos(a) - wr * Math.sin(a), y: cy + r * Math.sin(a) + wr * Math.cos(a) });
+        verts.push({ x: cx + wr * (Math.cos(a) + Math.cos(b)) / sinStep, y: cy + wr * (Math.sin(a) + Math.sin(b)) / sinStep });
+    }
+    return verts;
+}
+
 function insidePoly(px, py, verts) {
     let inside = false;
     for (let i = 0, j = verts.length - 1; i < verts.length; j = i++) {
-        const { x:xi, y:yi } = verts[i], { x:xj, y:yj } = verts[j];
+        const { x: xi, y: yi } = verts[i], { x: xj, y: yj } = verts[j];
         if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi)
             inside = !inside;
     }
@@ -615,92 +1364,108 @@ function insidePoly(px, py, verts) {
 
 function respawnBall(ball) {
     const a = Math.random() * Math.PI * 2, d = Math.random() * SHAPE_R * 0.28;
-    ball.x = cx + Math.cos(a) * d;
-    ball.y = cy + Math.sin(a) * d;
+    ball.x  = cx + Math.cos(a) * d;
+    ball.y  = cy + Math.sin(a) * d;
     ball.vx = (Math.random() * 2 - 1) * 3;
     ball.vy = (Math.random() * 2 - 1) * 3;
+    ball.omega = 0;
 }
 
-function closestOnSeg(px, py, ax, ay, bx, by) {
-    const dx = bx - ax, dy = by - ay, lenSq = dx * dx + dy * dy;
-    if (!lenSq) return { x: ax, y: ay };
-    const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
-    return { x: ax + t * dx, y: ay + t * dy };
-}
-
-function wallCollide(ball, verts) {
+function wallCollide(ball, verts, wallSpin) {
     const n = verts.length;
     for (let i = 0; i < n; i++) {
         const a = verts[i], b = verts[(i + 1) % n];
-        const cp = closestOnSeg(ball.x, ball.y, a.x, a.y, b.x, b.y);
-        const dx = ball.x - cp.x, dy = ball.y - cp.y;
+        const edx = b.x - a.x, edy = b.y - a.y;
+        const lenSq = edx * edx + edy * edy;
+        if (!lenSq) continue;
+        const t    = Math.max(0, Math.min(1, ((ball.x - a.x) * edx + (ball.y - a.y) * edy) / lenSq));
+        const cpx  = a.x + t * edx, cpy = a.y + t * edy;
+        const dx   = ball.x - cpx, dy  = ball.y - cpy;
         const dist = Math.hypot(dx, dy);
-        if (dist < BALL_R && dist > 0) {
-            const nx = dx / dist, ny = dy / dist;
-            const evx = -spin * (cp.y - cy), evy = spin * (cp.x - cx);
-            const vn = (ball.vx - evx) * nx + (ball.vy - evy) * ny;
+        if (dist < ball.r && dist > 0) {
+            const nx  = dx / dist, ny  = dy / dist;
+            const evx = -wallSpin * (cpy - cy), evy = wallSpin * (cpx - cx);
+            const dvx = ball.vx - evx, dvy = ball.vy - evy;
+            const vn  = dvx * nx + dvy * ny;
             if (vn < 0) {
                 ball.vx -= 1.8 * vn * nx;
                 ball.vy -= 1.8 * vn * ny;
+                const tx = -ny, ty = nx;
+                const vt = dvx * tx + dvy * ty - ball.omega * ball.r;
+                const fj = 0.22 * vt;
+                ball.vx -= fj * tx; ball.vy -= fj * ty;
+                ball.omega += fj / ball.r;
                 playBallHit(Math.hypot(ball.vx, ball.vy), ball.x);
             }
-            ball.x += nx * (BALL_R - dist);
-            ball.y += ny * (BALL_R - dist);
+            ball.x += nx * (ball.r - dist);
+            ball.y += ny * (ball.r - dist);
         }
     }
 }
 
+function containBallOutside(ball, innerVerts) {
+    if (insidePoly(ball.x, ball.y, innerVerts)) {
+        const dx = ball.x - cx, dy = ball.y - cy;
+        const d  = Math.hypot(dx, dy) || 1;
+        const nx = dx / d, ny = dy / d;
+        const vn = ball.vx * nx + ball.vy * ny;
+        if (vn < 0) { ball.vx -= 1.8 * vn * nx; ball.vy -= 1.8 * vn * ny; }
+        ball.x += nx * ball.r * 2;
+        ball.y += ny * ball.r * 2;
+    }
+}
+
 function boundarySafety(ball) {
-    const dist = Math.hypot(ball.x - cx, ball.y - cy);
-    if (dist > SHAPE_R - BALL_R && dist > 0) {
+    const R_safe = SHAPE_R * (currentShape.custom ? 1.5 : 1.0);
+    const dist   = Math.hypot(ball.x - cx, ball.y - cy);
+    if (dist > R_safe - ball.r && dist > 0) {
         const nx = (ball.x - cx) / dist, ny = (ball.y - cy) / dist;
-        ball.x = cx + nx * (SHAPE_R - BALL_R - 0.5);
-        ball.y = cy + ny * (SHAPE_R - BALL_R - 0.5);
+        ball.x = cx + nx * (R_safe - ball.r - 0.5);
+        ball.y = cy + ny * (R_safe - ball.r - 0.5);
         const vn = ball.vx * nx + ball.vy * ny;
         if (vn > 0) { ball.vx -= 2 * vn * nx; ball.vy -= 2 * vn * ny; }
     }
 }
 
-// Hard containment: insidePoly catches escapes through concave notches that
-// edge-based wallCollide misses (e.g. star shape inner corners).
 function containBall(ball, verts) {
     if (!insidePoly(ball.x, ball.y, verts)) {
         const dx = cx - ball.x, dy = cy - ball.y;
-        const d = Math.hypot(dx, dy) || 1;
+        const d  = Math.hypot(dx, dy) || 1;
         const nx = dx / d, ny = dy / d;
         const vn = ball.vx * nx + ball.vy * ny;
         if (vn < 0) { ball.vx -= 1.8 * vn * nx; ball.vy -= 1.8 * vn * ny; }
-        ball.x += nx * BALL_R * 2;
-        ball.y += ny * BALL_R * 2;
+        ball.x += nx * ball.r * 2;
+        ball.y += ny * ball.r * 2;
     }
 }
 
 function ballCollide() {
-    const cellSz = BALL_R * 2.4, inv = 1 / cellSz;
-    const hash = {};
-    const diam = BALL_R * 2, diam2 = diam * diam;
-
+    const cellSz = Math.max(BALL_R * 2, 1) * 2.6;
+    const inv    = 1 / cellSz;
+    const hash   = new Map();
     for (let i = 0; i < balls.length; i++) {
         const b = balls[i];
-        const k = Math.floor(b.x * inv) * 10000 + Math.floor(b.y * inv);
-        (hash[k] || (hash[k] = [])).push(i);
+        const k = ((Math.floor(b.x * inv) & 0xFFFF) | ((Math.floor(b.y * inv) & 0xFFFF) << 16)) >>> 0;
+        const cell = hash.get(k);
+        if (cell) cell.push(i); else hash.set(k, [i]);
     }
-
     for (let i = 0; i < balls.length; i++) {
-        const a = balls[i];
+        const a  = balls[i];
         const gx = Math.floor(a.x * inv), gy = Math.floor(a.y * inv);
         for (let ddx = -1; ddx <= 1; ddx++) {
             for (let ddy = -1; ddy <= 1; ddy++) {
-                const cell = hash[(gx + ddx) * 10000 + (gy + ddy)];
+                const k    = (((gx + ddx) & 0xFFFF) | (((gy + ddy) & 0xFFFF) << 16)) >>> 0;
+                const cell = hash.get(k);
                 if (!cell) continue;
                 for (let ci = 0; ci < cell.length; ci++) {
                     const j = cell[ci];
                     if (j <= i) continue;
-                    const b = balls[j];
-                    const ex = b.x - a.x, ey = b.y - a.y;
-                    const d2 = ex * ex + ey * ey;
-                    if (d2 < diam2 && d2 > 0) {
-                        const d = Math.sqrt(d2);
+                    const b    = balls[j];
+                    const ex   = b.x - a.x, ey = b.y - a.y;
+                    const d2   = ex * ex + ey * ey;
+                    const diam = a.r + b.r;
+                    if (d2 < diam * diam && d2 > 0) {
+                        const d  = Math.sqrt(d2);
                         const nx = ex / d, ny = ey / d;
                         const ov = (diam - d) * 0.5;
                         a.x -= nx * ov; a.y -= ny * ov;
@@ -709,6 +1474,14 @@ function ballCollide() {
                         if (vn < 0) {
                             a.vx += vn * nx; a.vy += vn * ny;
                             b.vx -= vn * nx; b.vy -= vn * ny;
+                            const tx = -ny, ty = nx;
+                            const vt = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty
+                                     + (a.omega + b.omega) * (a.r + b.r) * 0.5;
+                            const fj = 0.12 * vt;
+                            a.vx += fj * tx; a.vy += fj * ty;
+                            b.vx -= fj * tx; b.vy -= fj * ty;
+                            a.omega -= fj / a.r * 0.5;
+                            b.omega += fj / b.r * 0.5;
                         }
                     }
                 }
@@ -717,57 +1490,91 @@ function ballCollide() {
     }
 }
 
-let lastVerts = null;
+let lastVerts = null, lastInnerVerts = null;
 
 function update() {
     soundsThisFrame = 0;
-    const subSpin = spin / SUBSTEPS;
+    const subSpin      = spin / SUBSTEPS;
+    const subInnerSpin = innerSpin / SUBSTEPS;
     for (let s = 0; s < SUBSTEPS; s++) {
-        shapeAngle += subSpin;
-        const verts = shapeVerts(shapeAngle);
-        if (s === SUBSTEPS - 1) lastVerts = verts;
+        shapeAngle      += subSpin;
+        innerShapeAngle -= subInnerSpin;
+        const verts  = shapeVerts(shapeAngle);
+        const iVerts = innerShapeVerts(innerShapeAngle);
+        if (s === SUBSTEPS - 1) { lastVerts = verts; lastInnerVerts = iVerts; }
         for (const ball of balls) {
             ball.vy += gravity / SUBSTEPS;
             let spd = Math.hypot(ball.vx, ball.vy);
             if (spd > maxBallSpeed) { const f = maxBallSpeed / spd; ball.vx *= f; ball.vy *= f; }
-            ball.x += ball.vx / SUBSTEPS;
-            ball.y += ball.vy / SUBSTEPS;
-            wallCollide(ball, verts);
+            ball.vx *= 0.9994; ball.vy *= 0.9994;
+            ball.x  += ball.vx / SUBSTEPS;
+            ball.y  += ball.vy / SUBSTEPS;
+            ball.angle += ball.omega / SUBSTEPS;
+            ball.omega *= 0.9985;
+            wallCollide(ball, verts,  spin);
+            wallCollide(ball, iVerts, -innerSpin);
             boundarySafety(ball);
             containBall(ball, verts);
+            containBallOutside(ball, iVerts);
             spd = Math.hypot(ball.vx, ball.vy);
             if (spd > maxBallSpeed * 1.6) { const f = maxBallSpeed * 1.6 / spd; ball.vx *= f; ball.vy *= f; }
         }
         ballCollide();
     }
+    if (trailLength > 0) {
+        for (const ball of balls) {
+            if (!ball.trail) ball.trail = [];
+            ball.trail.push({ x: ball.x, y: ball.y });
+            if (ball.trail.length > trailLength) ball.trail.shift();
+        }
+    }
 }
 
-// ── Draw ──────────────────────────────────────────────────────
+// ── Draw ───────────────────────────────────────────────────────
+function getFogTint() {
+    const t = currentFogTheme.tint;
+    if (!t) return null;
+    if (t === 'cycle') return `hsl(${(frameCount * 2) % 360},90%,50%)`;
+    if (t === 'fast')  return `hsl(${(frameCount * 7) % 360},100%,65%)`;
+    return `rgb(${t})`;
+}
+
 function draw() {
-    const verts = lastVerts || shapeVerts(shapeAngle);
+    const verts  = lastVerts      || shapeVerts(shapeAngle);
+    const iVerts = lastInnerVerts || innerShapeVerts(innerShapeAngle);
     const { star, sides } = currentShape;
     const n = verts.length;
 
-    console.log(`[DRAW] verts.length=${n}, star=${star}, sides=${sides}, balls=${balls.length}`);
+    if (bgFade > 0) {
+        const fadeT = bgFade / 30;
+        const smoothT = fadeT * fadeT * (3 - 2 * fadeT); // smoothstep: gentle at low/high ends
+        ctx.globalAlpha = 1 - smoothT * 0.92;
+        ctx.drawImage(bgCanvas, 0, 0);
+        ctx.globalAlpha = 1;
+        const tint = getFogTint();
+        if (tint) {
+            ctx.globalAlpha = smoothT * 0.10;
+            ctx.fillStyle   = tint;
+            ctx.fillRect(0, 0, W, H);
+            ctx.globalAlpha = 1;
+        }
+    } else {
+        ctx.drawImage(bgCanvas, 0, 0);
+    }
 
-    // Clear to pre-rendered background
-    ctx.drawImage(bgCanvas, 0, 0);
-
-    // Shape interior fill
+    // Outer shape fill + border
     ctx.beginPath();
     verts.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
     ctx.closePath();
     ctx.fillStyle = currentTheme.shapeFill;
     ctx.fill();
-
-    // Glowing border
     ctx.save();
     ctx.shadowBlur = 36; ctx.shadowColor = currentTheme.shapeShadow;
     ctx.strokeStyle = currentTheme.shapeStroke; ctx.lineWidth = 3;
     ctx.stroke();
     ctx.restore();
 
-    // Vertex dots + edge ticks for small polygons
+    // Vertex dots + edge ticks
     if (!star && sides > 0 && sides <= 10) {
         verts.forEach(v => {
             ctx.save();
@@ -777,7 +1584,7 @@ function draw() {
             ctx.restore();
         });
         for (let i = 0; i < n; i++) {
-            const a = verts[i], b = verts[(i + 1) % n];
+            const a  = verts[i], b = verts[(i + 1) % n];
             const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
             const ex = b.x - a.x, ey = b.y - a.y, len = Math.hypot(ex, ey);
             let nx = ey / len, ny = -ex / len;
@@ -787,46 +1594,299 @@ function draw() {
         }
     }
 
-    // Balls via pre-rendered sprites
-    const spriteOff = 1 + BALL_R;
-    for (const ball of balls) {
-        ctx.drawImage(ball.sprite, ball.x - spriteOff, ball.y - spriteOff);
+    // Inner cross
+    ctx.beginPath();
+    iVerts.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
+    ctx.closePath();
+    ctx.fillStyle = currentTheme.shapeFill;
+    ctx.fill();
+    ctx.save();
+    ctx.shadowBlur = 20; ctx.shadowColor = currentTheme.shapeShadow;
+    ctx.strokeStyle = currentTheme.shapeStroke; ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // Comet trails
+    if (trailLength > 0) {
+        ctx.save();
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        const SEG = 6;
+        for (const ball of balls) {
+            if (!ball.trail || ball.trail.length < 2) continue;
+            const full = [...ball.trail, { x: ball.x, y: ball.y }];
+            const fLen = full.length;
+            for (let s = 0; s < SEG; s++) {
+                const frac = (s + 0.5) / SEG;
+                const i0   = Math.floor(s * fLen / SEG);
+                const i1   = Math.min(Math.floor((s + 1) * fLen / SEG), fLen - 1);
+                if (i1 <= i0) continue;
+                const hue = (ball.h + 90 * (1 - frac) + 360) % 360;
+                const lgt = Math.min(ball.l + 10 + frac * 20, 95);
+                ctx.globalAlpha = frac * frac * 0.85;
+                ctx.lineWidth   = Math.max(0.5, ball.r * (0.12 + frac * 0.88) * 1.8);
+                ctx.strokeStyle = `hsl(${hue},${ball.s}%,${lgt}%)`;
+                ctx.shadowBlur  = s === SEG - 1 ? ball.r * 3 : 0;
+                ctx.shadowColor = `hsl(${hue},${ball.s}%,85%)`;
+                ctx.beginPath();
+                ctx.moveTo(full[i0].x, full[i0].y);
+                for (let t = i0 + 1; t <= i1; t++) {
+                    if (t < fLen - 1) {
+                        const mx = (full[t].x + full[t + 1].x) / 2;
+                        const my = (full[t].y + full[t + 1].y) / 2;
+                        ctx.quadraticCurveTo(full[t].x, full[t].y, mx, my);
+                    } else {
+                        ctx.lineTo(full[t].x, full[t].y);
+                    }
+                }
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
     }
 
+    // Balls with spin rotation
+    for (const ball of balls) {
+        const off = 1 + ball.r;
+        ctx.save();
+        ctx.translate(ball.x, ball.y);
+        ctx.rotate(ball.angle);
+        ctx.drawImage(ball.sprite, -off, -off);
+        ctx.restore();
+    }
 }
 
-document.getElementById('resetBtn').addEventListener('click', () => {
-    shapeAngle = 0;
-    for (const ball of balls) respawnBall(ball);
+// ── Cross grid ─────────────────────────────────────────────────
+const crossGrid = document.getElementById('cross-grid');
+CROSS_SHAPES.forEach(shape => {
+    const btn = document.createElement('button');
+    btn.className = 'shape-btn' + (shape === currentCrossShape ? ' active' : '');
+    btn.title = shape.label;
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 32 32');
+    const el = document.createElementNS(NS, 'polygon');
+    el.setAttribute('points', iconCrossPoints(shape));
+    svg.appendChild(el);
+    const ballDot = document.createElementNS(NS, 'circle');
+    ballDot.setAttribute('cx', '16'); ballDot.setAttribute('cy', '16'); ballDot.setAttribute('r', '3.5');
+    ballDot.setAttribute('class', 'cross-ball');
+    svg.appendChild(ballDot);
+    btn.appendChild(svg);
+    btn.addEventListener('click', () => {
+        crossGrid.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCrossShape = shape;
+        saveSettings();
+    });
+    crossGrid.appendChild(btn);
 });
 
-// ── Themes ───────────────────────────────────────────────────
+slider('sCrossSize',  'vCrossSize',  v => { INNER_R = v / 100 * SHAPE_R; });
+slider('sCrossSpeed', 'vCrossSpeed', v => { innerSpin = v * 0.0026; });
+
+// ── Theme functions ────────────────────────────────────────────
 function setTheme(theme) {
     currentTheme = theme;
     rebuildBgCanvas();
-    const r = document.documentElement;
-    r.style.setProperty('--accent',        theme.accent);
-    r.style.setProperty('--accent-glow15', theme.glow15);
-    r.style.setProperty('--accent-glow70', theme.glow70);
-    r.style.setProperty('--panel-bg',      theme.panel);
-    r.style.setProperty('--panel-border',  theme.panelBorder);
-    r.style.setProperty('--track-empty',   theme.trackEmpty);
+    const root = document.documentElement;
+    root.style.setProperty('--accent',        theme.accent);
+    root.style.setProperty('--accent-glow15', theme.glow15);
+    root.style.setProperty('--accent-glow70', theme.glow70);
+    root.style.setProperty('--panel-bg',      theme.panel);
+    root.style.setProperty('--panel-border',  theme.panelBorder);
+    root.style.setProperty('--track-empty',   theme.trackEmpty);
     document.querySelectorAll('input[type=range]').forEach(trackBg);
     document.querySelectorAll('.theme-swatch').forEach(btn =>
-        btn.classList.toggle('active', btn.dataset.id === theme.id));
+        btn.classList.toggle('active', btn.dataset.id === theme.id && btn.dataset.grid === 'theme')
+    );
+    saveSettings();
 }
 
 THEMES.forEach(theme => {
     const btn = document.createElement('button');
     btn.className = 'theme-swatch' + (theme === currentTheme ? ' active' : '');
-    btn.dataset.id = theme.id;
-    btn.title = theme.name;
+    btn.dataset.id   = theme.id;
+    btn.dataset.grid = 'theme';
+    btn.title        = theme.name;
     btn.style.background = theme.swatch;
     btn.addEventListener('click', () => setTheme(theme));
     document.getElementById('theme-grid').appendChild(btn);
 });
 
-function loop() { update(); draw(); requestAnimationFrame(loop); }
+function setBallTheme(theme, recolor = true) {
+    currentBallTheme = theme;
+    document.querySelectorAll('#ball-theme-grid .theme-swatch').forEach(b =>
+        b.classList.toggle('active', b.dataset.id === theme.id)
+    );
+    if (recolor) {
+        balls.forEach(ball => {
+            const { h, s, l } = theme.getHSL();
+            ball.h = h; ball.s = s; ball.l = l;
+            ball.sprite = makeBallSprite(h, s, l, ball.r);
+        });
+    }
+    saveSettings();
+}
+
+BALL_THEMES.forEach(theme => {
+    const btn = document.createElement('button');
+    btn.className    = 'theme-swatch' + (theme === currentBallTheme ? ' active' : '');
+    btn.dataset.id   = theme.id;
+    btn.title        = theme.name;
+    btn.style.background = theme.swatch;
+    btn.addEventListener('click', () => setBallTheme(theme));
+    document.getElementById('ball-theme-grid').appendChild(btn);
+});
+
+function setFogTheme(theme, save = true) {
+    currentFogTheme = theme;
+    document.querySelectorAll('#fog-theme-grid .theme-swatch').forEach(b =>
+        b.classList.toggle('active', b.dataset.id === theme.id)
+    );
+    if (save) saveSettings();
+}
+
+const fogSwatchGrads = {
+    standard: 'linear-gradient(135deg,#888,#ccc)',
+    galaxy:   'linear-gradient(135deg,#440088,#8844ff,#00ddff)',
+    rainbow:  'linear-gradient(135deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f)',
+    fire:     'linear-gradient(135deg,#ff0000,#ff6600,#ffcc00)',
+    firework: 'linear-gradient(135deg,#ff00ff,#00ffff,#ffff00,#ff00aa)',
+    ocean:    'linear-gradient(135deg,#001133,#0066cc,#00aaff)',
+    aurora:   'linear-gradient(135deg,#004422,#00ff88,#00ccff)',
+    storm:    'linear-gradient(135deg,#223344,#4488dd,#88aacc)',
+    bloodfog: 'linear-gradient(135deg,#440011,#cc1133,#ff4444)',
+    acidfog:  'linear-gradient(135deg,#334400,#aaff00,#ffff44)',
+    void:     'linear-gradient(135deg,#110022,#330055,#6600aa)',
+    solar:    'linear-gradient(135deg,#aa4400,#ffaa00,#ffff44)',
+};
+
+FOG_THEMES.forEach(theme => {
+    const btn = document.createElement('button');
+    btn.className    = 'theme-swatch' + (theme === currentFogTheme ? ' active' : '');
+    btn.dataset.id   = theme.id;
+    btn.title        = theme.name;
+    btn.style.background = fogSwatchGrads[theme.id] || theme.swatch;
+    btn.addEventListener('click', () => setFogTheme(theme));
+    document.getElementById('fog-theme-grid').appendChild(btn);
+});
+
+// ── Random buttons ─────────────────────────────────────────────
+document.getElementById('rndShape').addEventListener('click', () => {
+    const btns = [...shapeGrid.querySelectorAll('.shape-btn')];
+    btns[Math.floor(Math.random() * btns.length)]?.click();
+});
+document.getElementById('rndBallTheme').addEventListener('click', () => {
+    setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
+});
+document.getElementById('rndFogTheme').addEventListener('click', () => {
+    setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
+});
+document.getElementById('rndTheme').addEventListener('click', () => {
+    setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
+});
+
+// ── Reset ──────────────────────────────────────────────────────
+document.getElementById('resetBtn').addEventListener('click', () => {
+    if (paused) { paused = false; pauseBtn.innerHTML = ICON_PAUSE; pauseBtn.classList.remove('paused'); }
+    applySettings(DEFAULTS);
+    localStorage.removeItem('bb');
+    shapeAngle = 0; innerShapeAngle = 0;
+    balls.forEach(respawnBall);
+});
+
+// ── Resize handler ─────────────────────────────────────────────
+let _resizeSaveTimer = null;
+window.addEventListener('resize', () => {
+    const prevShapeR = SHAPE_R;
+    resizeCanvas();
+    if (prevShapeR > 0 && SHAPE_R !== prevShapeR) {
+        const scale = SHAPE_R / prevShapeR;
+        BALL_R = Math.max(3, Math.min(18, BALL_R * scale));
+        const sEl = document.getElementById('sBallSize');
+        sEl.value = Math.round(BALL_R);
+        trackBg(sEl);
+        document.getElementById('vBallSize').textContent = sEl.value;
+        balls.forEach(ball => {
+            ball.r      = clampedR();
+            ball.sprite = makeBallSprite(ball.h, ball.s, ball.l, ball.r);
+        });
+    }
+    bgCanvas.width  = W; bgCanvas.height = H;
+    INNER_R = SHAPE_R * (+document.getElementById('sCrossSize').value / 100);
+    rebuildBgCanvas();
+    balls.forEach(respawnBall);
+    // Debounce save after resize settles
+    clearTimeout(_resizeSaveTimer);
+    _resizeSaveTimer = setTimeout(saveSettings, 500);
+});
+
+// ── Favicon ────────────────────────────────────────────────────
+(function setFavicon() {
+    const fc = document.createElement('canvas');
+    fc.width = fc.height = 64;
+    const fx = fc.getContext('2d');
+    const cx = 32, cy = 32, hex = 27, crossR = 16, crossW = 5, ballR = 9;
+
+    // Dark background
+    fx.fillStyle = '#07071a';
+    fx.fillRect(0, 0, 64, 64);
+
+    // Hexagon
+    fx.beginPath();
+    for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + i * Math.PI / 3;
+        i ? fx.lineTo(cx + Math.cos(a) * hex, cy + Math.sin(a) * hex)
+          : fx.moveTo(cx + Math.cos(a) * hex, cy + Math.sin(a) * hex);
+    }
+    fx.closePath();
+    fx.strokeStyle = '#00d4ff'; fx.lineWidth = 2.5;
+    fx.shadowColor = '#00d4ff'; fx.shadowBlur = 8;
+    fx.stroke();
+
+    // Cross (plus shape)
+    fx.shadowColor = '#88aaff'; fx.shadowBlur = 5;
+    fx.fillStyle = 'rgba(100,160,255,0.22)';
+    fx.strokeStyle = 'rgba(100,180,255,0.55)'; fx.lineWidth = 1.5;
+    fx.beginPath();
+    fx.rect(cx - crossR, cy - crossW, crossR * 2, crossW * 2);
+    fx.rect(cx - crossW, cy - crossR, crossW * 2, crossR * 2);
+    fx.fill(); fx.stroke();
+
+    // Colorful ball
+    fx.shadowColor = '#ff66ff'; fx.shadowBlur = 14;
+    const gr = fx.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, ballR);
+    gr.addColorStop(0,    '#ffffff');
+    gr.addColorStop(0.25, '#ff88ff');
+    gr.addColorStop(0.55, '#5533ff');
+    gr.addColorStop(1,    '#000033');
+    fx.beginPath(); fx.arc(cx, cy, ballR, 0, Math.PI * 2);
+    fx.fillStyle = gr; fx.fill();
+
+    // Specular highlight
+    fx.shadowBlur = 0;
+    const hl = fx.createRadialGradient(cx - 3.5, cy - 3.5, 0.5, cx - 2, cy - 2, 4);
+    hl.addColorStop(0, 'rgba(255,255,255,.85)');
+    hl.addColorStop(1, 'rgba(255,255,255,0)');
+    fx.beginPath(); fx.arc(cx - 2, cy - 2, 4, 0, Math.PI * 2);
+    fx.fillStyle = hl; fx.fill();
+
+    document.getElementById('favicon').href = fc.toDataURL();
+})();
+
+loadSettings();
+// Randomize all themes on every startup
+_suppressSave = true;
+setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
+setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
+setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
+_suppressSave = false;
+
+// ── Game loop ──────────────────────────────────────────────────
+function loop() {
+    if (!paused) { update(); frameCount++; }
+    draw();
+    requestAnimationFrame(loop);
+}
 loop();
 </script>
 </body>
