@@ -6,12 +6,6 @@
 
 ---
 
-## Preview
-
-![Ball Bouncer preview](docs/preview.png)
-
----
-
 ## Features
 
 - **32 outer shapes** — polygons (triangle → 16-gon), stars, and hand-crafted characters: Ghost, Cat, Pac-Man, Heart, Crown, Skull, Fish, Rocket, Bat, Bell, Cloud, Flame…
@@ -40,21 +34,3 @@
 | Background | Fog tint + fade persistence |
 | Theme | Shape/panel color theme |
 | Random Themes | Toggle auto-rotating themes |
-
----
-
-## Tech
-
-Single-file HTML + Canvas 2D. No build step, no dependencies (Vercel Analytics is opt-in). Deploy anywhere that serves static files.
-
-```bash
-# Local dev
-npx serve .
-# or just open ballbouncer.html in a browser
-```
-
----
-
-## Deploy
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/bgcoding/ballbouncer)

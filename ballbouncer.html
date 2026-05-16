@@ -371,8 +371,8 @@
         <div id="shape-grid"></div>
         <div class="ctrl-pair" style="margin-top:6px">
             <div class="ctrl">
-                <label>Size <span id="vShapeSize">47</span></label>
-                <input type="range" id="sShapeSize" min="20" max="85" value="47">
+                <label>Size <span id="vShapeSize">55</span></label>
+                <input type="range" id="sShapeSize" min="1" max="100" value="55">
             </div>
             <div class="ctrl">
                 <label>Speed <span id="vShapeSpeed">5</span></label>
@@ -389,8 +389,8 @@
         <div id="cross-grid"></div>
         <div class="ctrl-pair" style="margin-top:6px">
             <div class="ctrl">
-                <label>Size <span id="vCrossSize">35</span></label>
-                <input type="range" id="sCrossSize" min="10" max="65" value="35">
+                <label>Size <span id="vCrossSize">50</span></label>
+                <input type="range" id="sCrossSize" min="1" max="100" value="50">
             </div>
             <div class="ctrl">
                 <label>Speed <span id="vCrossSpeed">3</span></label>
@@ -486,7 +486,7 @@ function resizeCanvas() {
     c.width  = window.innerWidth - PANEL_W - adW;
     c.height = window.innerHeight;
     W = c.width; H = c.height; cx = W / 2; cy = H / 2;
-    SHAPE_R = (shapeSize / 100) * Math.min(W, H);
+    SHAPE_R = (shapeSize / 100) * 0.90 * Math.min(W, H);
 }
 resizeCanvas();
 
@@ -1138,8 +1138,8 @@ SHAPES.forEach(shape => {
 
 // ── Settings ───────────────────────────────────────────────────
 const DEFAULTS = {
-    balls:100, ballSize:_defaultR, gravity:5, ballSpeed:5, shapeSpeed:5, shapeSize:47,
-    volume:10, ballSound:2, crossSize:35, crossSpeed:3,
+    balls:100, ballSize:_defaultR, gravity:5, ballSpeed:5, shapeSpeed:5, shapeSize:55,
+    volume:10, ballSound:2, crossSize:50, crossSpeed:3,
     bg:20, fogTrail:0, sizeRandomness:0,
     shapeIdx:3, crossIdx:0,
     themeId:'cyber', ballThemeId:'standard', fogThemeId:'standard',
@@ -1248,8 +1248,8 @@ slider('sBallSpeed',  'vBallSpeed',  v => { maxBallSpeed = v * 3; });
 slider('sShapeSpeed', 'vShapeSpeed', v => { spin = v * 0.0026; });
 slider('sShapeSize',  'vShapeSize',  v => {
     shapeSize = v;
-    SHAPE_R = (v / 100) * Math.min(W, H);
-    INNER_R = SHAPE_R * (+document.getElementById('sCrossSize').value / 100);
+    SHAPE_R = (v / 100) * 0.90 * Math.min(W, H);
+    INNER_R = SHAPE_R * 0.65 * (+document.getElementById('sCrossSize').value / 100);
     rebuildBgCanvas();
     balls.forEach(respawnBall);
 });
@@ -1680,7 +1680,7 @@ CROSS_SHAPES.forEach(shape => {
     crossGrid.appendChild(btn);
 });
 
-slider('sCrossSize',  'vCrossSize',  v => { INNER_R = v / 100 * SHAPE_R; });
+slider('sCrossSize',  'vCrossSize',  v => { INNER_R = (v / 100) * 0.65 * SHAPE_R; });
 slider('sCrossSpeed', 'vCrossSpeed', v => { innerSpin = v * 0.0026; });
 
 // ── Theme functions ────────────────────────────────────────────
@@ -1812,7 +1812,7 @@ window.addEventListener('resize', () => {
         });
     }
     bgCanvas.width  = W; bgCanvas.height = H;
-    INNER_R = SHAPE_R * (+document.getElementById('sCrossSize').value / 100);
+    INNER_R = SHAPE_R * 0.65 * (+document.getElementById('sCrossSize').value / 100);
     rebuildBgCanvas();
     balls.forEach(respawnBall);
     // Debounce save after resize settles
