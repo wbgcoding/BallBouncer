@@ -1082,15 +1082,6 @@ let audioMuted = false, ballSoundMuted = false;
 let audioVol = 0.10, audioStarted = false, ballSoundVol = 0.02;
 let soundsThisFrame = 0;
 const MAX_SOUNDS_PER_FRAME = 3;
-let noiseBuffer = null;
-
-function makeNoiseBuffer() {
-    const len = Math.floor(audioCtx.sampleRate * 0.1);
-    const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    return buf;
-}
 
 function startAudio() {
     if (audioStarted) return;
@@ -1098,20 +1089,22 @@ function startAudio() {
     try {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        const revLen = Math.floor(audioCtx.sampleRate * 1.6);
+        // Long airy reverb — 4 s tail for deep space feel
+        const revLen = Math.floor(audioCtx.sampleRate * 4.0);
         const revBuf = audioCtx.createBuffer(2, revLen, audioCtx.sampleRate);
         for (let ch = 0; ch < 2; ch++) {
             const d = revBuf.getChannelData(ch);
             for (let i = 0; i < revLen; i++)
-                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 2.8);
+                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 1.6);
         }
         reverbNode = audioCtx.createConvolver();
         reverbNode.buffer = revBuf;
 
-        const delay = audioCtx.createDelay(0.6);
-        delay.delayTime.value = 0.22;
+        // Slow echo (0.9 s, 45 % feedback)
+        const delay = audioCtx.createDelay(1.5);
+        delay.delayTime.value = 0.90;
         const delayFB = audioCtx.createGain();
-        delayFB.gain.value = 0.30;
+        delayFB.gain.value = 0.45;
         delay.connect(delayFB); delayFB.connect(delay);
 
         masterGain = audioCtx.createGain();
@@ -1124,117 +1117,90 @@ function startAudio() {
         ballGain.gain.value = ballSoundMuted ? 0 : 1;
         ballGain.connect(audioCtx.destination);
 
-        [[55, .06], [110, .04], [164.8, .025]].forEach(([f, g]) => {
-            const osc = audioCtx.createOscillator();
-            const gn  = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = f * (1 + (Math.random() - .5) * 0.004);
-            gn.gain.value = g;
+        // Sub drone: 27.5 Hz sine with ultra-slow tremolo
+        {
+            const osc = audioCtx.createOscillator(), gn = audioCtx.createGain();
+            const trem = audioCtx.createOscillator(), tremG = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.value = 27.5;
+            trem.frequency.value = 0.05; tremG.gain.value = 0.012;
+            trem.connect(tremG); tremG.connect(gn.gain);
+            gn.gain.value = 0.032;
             osc.connect(gn); gn.connect(reverbNode);
-            osc.start();
+            osc.start(); trem.start();
+        }
+
+        // Beating double drone: 55 Hz + 55.28 Hz → 0.28 Hz pulse
+        [55, 55.28].forEach(f => {
+            const osc = audioCtx.createOscillator(), gn = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.value = f;
+            gn.gain.value = 0.020;
+            osc.connect(gn); gn.connect(reverbNode); osc.start();
         });
 
-        const lfo = audioCtx.createOscillator();
-        const lfoGain = audioCtx.createGain();
-        lfo.frequency.value = 0.33; lfoGain.gain.value = 0.028;
-        lfo.connect(lfoGain); lfo.start();
-
-        [[130.8, 0.022], [196.0, 0.016], [261.6, 0.011]].forEach(([freq, gain]) => {
+        // Tri-pad cluster: three detuned triangle pairs + slow LFO swell
+        const padLfo = audioCtx.createOscillator(), padLfoG = audioCtx.createGain();
+        padLfo.frequency.value = 0.07; padLfoG.gain.value = 0.010;
+        padLfo.connect(padLfoG); padLfo.start();
+        [[110, 0.016], [164.8, 0.011], [220, 0.007]].forEach(([freq, gain]) => {
             const p1 = audioCtx.createOscillator(), p2 = audioCtx.createOscillator();
-            const pg = audioCtx.createGain();
-            p1.type = p2.type = 'sawtooth';
-            p1.frequency.value = freq; p2.frequency.value = freq * 1.004;
+            const filt = audioCtx.createBiquadFilter(), pg = audioCtx.createGain();
+            p1.type = p2.type = 'triangle';
+            p1.frequency.value = freq; p2.frequency.value = freq * 1.0055;
+            filt.type = 'lowpass'; filt.frequency.value = freq * 2.8; filt.Q.value = 0.8;
             pg.gain.value = gain;
-            lfoGain.connect(pg.gain);
-            p1.connect(pg); p2.connect(pg); pg.connect(reverbNode);
+            padLfoG.connect(pg.gain);
+            p1.connect(filt); p2.connect(filt); filt.connect(pg); pg.connect(reverbNode);
             p1.start(); p2.start();
         });
 
-        noiseBuffer = makeNoiseBuffer();
-        scheduleBeat();
+        // Bandpass space shimmer: looped noise through narrow BP filter
+        {
+            const nLen = Math.floor(audioCtx.sampleRate * 3);
+            const nBuf = audioCtx.createBuffer(1, nLen, audioCtx.sampleRate);
+            const nd = nBuf.getChannelData(0);
+            for (let i = 0; i < nLen; i++) nd[i] = Math.random() * 2 - 1;
+            const src = audioCtx.createBufferSource(), gn = audioCtx.createGain();
+            const bp  = audioCtx.createBiquadFilter();
+            src.buffer = nBuf; src.loop = true;
+            bp.type = 'bandpass'; bp.frequency.value = 2800; bp.Q.value = 10;
+            gn.gain.value = 0.0035;
+            src.connect(bp); bp.connect(gn); gn.connect(reverbNode); src.start();
+        }
+
         scheduleMelody(delay);
     } catch (e) { console.warn('Audio unavailable', e); }
 }
 
-const SCALE = [130.8, 146.8, 164.8, 196, 220, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3, 784, 880, 1046.5];
+// Minor-pentatonic + tritone colour notes across five octaves
+const SCALE = [55, 65.4, 73.4, 82.4, 98, 110, 130.8, 146.8, 164.8, 196,
+               220, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3, 784, 880, 1046.5];
 
-function playNote(dest, freq, vol = 0.075, dur = 0.75) {
+function playNote(dest, freq, vol = 0.036, dur = 3.5) {
     if (!audioCtx || audioMuted) return;
-    const osc = audioCtx.createOscillator();
-    const filt = audioCtx.createBiquadFilter();
-    const env = audioCtx.createGain();
-    osc.type = 'sawtooth'; osc.frequency.value = freq;
-    filt.type = 'lowpass'; filt.frequency.value = Math.min(freq * 5, 8000); filt.Q.value = 2;
+    const o1 = audioCtx.createOscillator(), o2 = audioCtx.createOscillator();
+    const filt = audioCtx.createBiquadFilter(), env = audioCtx.createGain();
+    o1.type = o2.type = 'sine';
+    o1.frequency.value = freq; o2.frequency.value = freq * 1.0028; // subtle chorus
+    filt.type = 'lowpass'; filt.frequency.value = Math.min(freq * 4, 3200); filt.Q.value = 0.7;
     const t = audioCtx.currentTime;
     env.gain.setValueAtTime(0, t);
-    env.gain.linearRampToValueAtTime(vol, t + 0.022);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(filt); filt.connect(env); env.connect(dest);
-    osc.start(t); osc.stop(t + dur + 0.05);
-}
-
-function playKick() {
-    if (!audioCtx || audioMuted) return;
-    const osc = audioCtx.createOscillator(), env = audioCtx.createGain();
-    const t = audioCtx.currentTime;
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(150, t);
-    osc.frequency.exponentialRampToValueAtTime(38, t + 0.22);
-    env.gain.setValueAtTime(0.75, t);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
-    osc.connect(env); env.connect(masterGain);
-    osc.start(t); osc.stop(t + 0.34);
-}
-
-function playBass() {
-    if (!audioCtx || audioMuted) return;
-    const osc = audioCtx.createOscillator(), env = audioCtx.createGain();
-    const t = audioCtx.currentTime;
-    osc.type = 'triangle'; osc.frequency.value = 65.4;
-    env.gain.setValueAtTime(0.28, t);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
-    osc.connect(env); env.connect(masterGain);
-    osc.start(t); osc.stop(t + 0.46);
-}
-
-function playHihat(open) {
-    if (!audioCtx || audioMuted || !noiseBuffer) return;
-    const src = audioCtx.createBufferSource();
-    src.buffer = noiseBuffer;
-    const hp  = audioCtx.createBiquadFilter();
-    hp.type = 'highpass'; hp.frequency.value = 7500;
-    const env = audioCtx.createGain();
-    const t   = audioCtx.currentTime;
-    const dur = open ? 0.14 : 0.035;
-    env.gain.setValueAtTime(open ? 0.06 : 0.04, t);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(hp); hp.connect(env); env.connect(masterGain);
-    src.start(t);
-}
-
-const STEP_MS    = 250;
-const KICK_STEPS = new Set([0, 4]);
-const OPEN_STEPS = new Set([2, 6]);
-let beatStep = 0;
-
-function scheduleBeat() {
-    if (audioCtx && !audioMuted) {
-        if (KICK_STEPS.has(beatStep)) { playKick(); playBass(); }
-        playHihat(OPEN_STEPS.has(beatStep));
-    }
-    beatStep = (beatStep + 1) % 8;
-    setTimeout(scheduleBeat, STEP_MS);
+    env.gain.linearRampToValueAtTime(vol, t + 0.70);        // slow fade-in
+    env.gain.setValueAtTime(vol, t + dur - 1.0);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur); // slow fade-out
+    o1.connect(filt); o2.connect(filt); filt.connect(env); env.connect(dest);
+    o1.start(t); o1.stop(t + dur + 0.1);
+    o2.start(t); o2.stop(t + dur + 0.1);
 }
 
 function scheduleMelody(dest) {
     const freq = SCALE[Math.floor(Math.random() * SCALE.length)];
-    playNote(dest, freq);
-    if (Math.random() < 0.55) playNote(dest, freq * 1.5, 0.042, 0.55);
-    if (Math.random() < 0.42) {
-        const idx = Math.floor(Math.random() * SCALE.length);
-        setTimeout(() => playNote(dest, SCALE[idx], 0.05, 0.55), 130);
-    }
-    setTimeout(() => scheduleMelody(dest), 180 + Math.random() * 420);
+    const dur  = 3.5 + Math.random() * 3.5;
+    playNote(dest, freq, 0.026 + Math.random() * 0.020, dur);
+    // Occasional soft fifth harmony
+    if (Math.random() < 0.35)
+        setTimeout(() => playNote(dest, freq * 1.5, 0.015, dur * 0.8), 700 + Math.random() * 1300);
+    // Sparse onset: 2.5–6 s gap
+    setTimeout(() => scheduleMelody(dest), 2500 + Math.random() * 3500);
 }
 
 function playBallHit(speed, ballX) {
