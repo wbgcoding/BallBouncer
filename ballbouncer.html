@@ -21,6 +21,11 @@
             --panel-bg:#07071a;
             --panel-border:#111128;
             --track-empty:#1a2a40;
+            --ball-rtl-dur:3s;
+            --logo-sweep-dur:3s;
+            --title-sweep-dur:6s;
+            --title-glow-dur:4s;
+            --icon-ball-dur:8s;
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -34,6 +39,20 @@
         }
 
         canvas { display:block; flex:1; }
+        #canvas-logo {
+            position:fixed; pointer-events:none; white-space:nowrap;
+            font-weight:bold; font-family:'Segoe UI',system-ui,sans-serif;
+            background:linear-gradient(90deg,#ff66aa,#66ccff,#88ffcc,#ff66aa);
+            background-size:300% 100%;
+            -webkit-background-clip:text; background-clip:text; color:transparent;
+            filter:drop-shadow(0 0 10px rgba(160,220,255,.85));
+            animation:logoColorSweep var(--logo-sweep-dur) linear infinite;
+        }
+        @keyframes logoColorSweep {
+            0%{background-position:0% center}100%{background-position:300% center}
+        }
+        .rnd-row { display:flex; gap:6px; margin-top:6px; }
+        .rnd-row .toggle-row { flex:1; font-size:8px; padding:2px 0; margin-top:0; }
 
         /* ── Ad column ─────────────────────────────────── */
         #ad-left {
@@ -85,10 +104,6 @@
             display:flex; align-items:center; justify-content:center;
             gap:8px; padding-bottom:2px; position:relative; z-index:1;
         }
-        @keyframes logoRainbow {
-            0%   { filter: hue-rotate(0deg)   drop-shadow(0 0 6px rgba(129,140,248,.6)); }
-            100% { filter: hue-rotate(360deg) drop-shadow(0 0 6px rgba(129,140,248,.6)); }
-        }
         @keyframes iconBallRainbow {
             0%   { fill:hsl(0,85%,68%);   }
             16%  { fill:hsl(60,85%,68%);  }
@@ -98,14 +113,49 @@
             83%  { fill:hsl(300,85%,68%); }
             100% { fill:hsl(360,85%,68%); }
         }
-        .logo-ball { flex-shrink:0; display:block; animation:logoRainbow 12s linear infinite; }
-        .cross-ball { animation:iconBallRainbow 8s linear infinite; }
+        .cross-ball { animation:iconBallRainbow var(--icon-ball-dur) linear infinite; }
+        @keyframes ballRainbowRTL {
+            0%   { background-position: 200% center; }
+            100% { background-position: -100% center; }
+        }
+        .logo-ball {
+            width:22px; height:22px; border-radius:50%;
+            flex-shrink:0; position:relative; overflow:hidden;
+            box-shadow: 2px 4px 10px rgba(0,0,0,.8), 0 0 0 0.5px rgba(255,255,255,.08);
+        }
+        .logo-ball::before {
+            content:''; position:absolute; inset:0;
+            background: linear-gradient(270deg,
+                hsl(0,90%,58%), hsl(60,90%,58%), hsl(120,90%,58%),
+                hsl(180,90%,58%), hsl(240,90%,60%), hsl(300,90%,58%), hsl(360,90%,58%));
+            background-size:300% 100%;
+            animation:ballRainbowRTL var(--ball-rtl-dur) linear infinite;
+        }
+        .logo-ball::after {
+            content:''; position:absolute; inset:0;
+            background: radial-gradient(circle at 33% 28%,
+                rgba(255,255,255,.88) 0%,
+                rgba(255,255,255,.10) 38%,
+                rgba(0,0,0,0) 54%,
+                rgba(0,0,0,.42) 100%);
+        }
+        @keyframes logoTextSweep {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+        @keyframes logoTextGlow {
+            0%,100% { filter: drop-shadow(0 0 7px rgba(129,140,248,.8)) drop-shadow(0 0 2px rgba(129,140,248,.4)); }
+            33%     { filter: drop-shadow(0 0 9px rgba(56,189,248,.9))  drop-shadow(0 0 2px rgba(56,189,248,.5)); }
+            66%     { filter: drop-shadow(0 0 8px rgba(255,100,220,.8)) drop-shadow(0 0 2px rgba(255,100,220,.4)); }
+        }
         .logo-title {
             font-size:19px; font-weight:800; letter-spacing:.06em; line-height:1;
-            background:linear-gradient(120deg, #818cf8 0%, #38bdf8 55%, #00d4ff 100%);
+            background: linear-gradient(90deg,
+                #818cf8, #38bdf8, #00ffcc, #ffdd00, #ff66cc, #818cf8, #38bdf8);
+            background-size: 300% 100%;
             -webkit-background-clip:text; -webkit-text-fill-color:transparent;
             background-clip:text;
-            filter:drop-shadow(0 0 10px rgba(56,189,248,.5));
+            animation: logoTextSweep var(--title-sweep-dur) linear infinite, logoTextGlow var(--title-glow-dur) ease-in-out infinite;
         }
         .rnd-themes-btn {
             width:100%; padding:5px 8px; margin-top:6px;
@@ -116,6 +166,84 @@
         }
         .rnd-themes-btn:hover { background:rgba(0,180,255,.16); border-color:rgba(0,180,255,.5); color:#e0f4ff; }
         .rnd-themes-btn.active { background:rgba(0,212,255,.22); border-color:#00d4ff; color:#00d4ff; }
+
+        /* ── Toggle rows ────────────────────────────────────── */
+        .toggle-row {
+            display:flex; align-items:center; justify-content:space-between;
+            margin-top:4px; padding:3px 0; cursor:pointer; user-select:none;
+            color:rgba(160,200,230,.55); font-size:10px; font-weight:600;
+            letter-spacing:.08em; text-transform:uppercase; transition:color .2s;
+        }
+        .toggle-row:hover { color:#e0f4ff; }
+        .hole-controls {
+            display:flex; align-items:center; gap:5px;
+            padding:1px 0 5px;
+            font-size:9px; color:rgba(160,200,230,.55);
+            letter-spacing:.05em; text-transform:uppercase;
+        }
+        .hole-ctrl-slider { flex:1; min-width:0; }
+        .hole-cycle-btn {
+            flex-shrink:0;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:4px; color:#2e5070; font-size:13px; cursor:pointer;
+            width:22px; height:20px; padding:0; line-height:1;
+            display:flex; align-items:center; justify-content:center;
+            transition:border-color .15s, color .15s, background .15s;
+        }
+        .hole-cycle-btn:hover { border-color:#006688; color:var(--accent); background:#0d1830; }
+        .lang-select {
+            width:100%; padding:4px 6px; margin-top:2px;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:5px; color:#3a5468;
+            font-size:10px; font-weight:600; letter-spacing:.06em;
+            cursor:pointer; outline:none;
+            transition:border-color .15s, color .15s;
+        }
+        .lang-select:hover, .lang-select:focus { border-color:#006688; color:var(--accent); }
+        .toggle-switch {
+            position:relative; width:36px; height:20px; flex-shrink:0;
+        }
+        .toggle-switch input {
+            opacity:0; width:0; height:0; position:absolute; pointer-events:none;
+        }
+        .toggle-track {
+            position:absolute; inset:0;
+            background:rgba(0,180,255,.08); border:1px solid rgba(0,180,255,.18);
+            border-radius:10px; transition:background .2s, border-color .2s;
+        }
+        .toggle-switch input:checked + .toggle-track {
+            background:rgba(0,212,255,.25); border-color:#00d4ff;
+        }
+        .toggle-thumb {
+            position:absolute; top:3px; left:3px;
+            width:14px; height:14px; border-radius:50%;
+            background:#2a3e52; box-shadow:0 1px 3px rgba(0,0,0,.5);
+            transition:left .18s cubic-bezier(.4,0,.2,1), background .18s;
+            pointer-events:none;
+        }
+        .toggle-switch input:checked ~ .toggle-thumb {
+            left:19px; background:#00d4ff;
+            box-shadow:0 0 8px rgba(0,212,255,.6), 0 1px 3px rgba(0,0,0,.4);
+        }
+
+        /* ── Direction buttons ──────────────────────────────── */
+        .dir-btn {
+            flex:1; height:26px; padding:0 6px;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:6px; color:#3a5468; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+            transition:border-color .15s, color .15s, background .15s;
+        }
+        .dir-btn:hover { border-color:#006688; color:var(--accent); background:#0d1830; }
+        .dir-btn:active { transform:scale(0.95); }
+        .dir-label {
+            display:inline-block; padding:1px 6px;
+            border:1px solid rgba(160,200,230,.3); border-radius:3px;
+            font-size:9px; font-weight:800; letter-spacing:.03em;
+            color:var(--accent); background:rgba(0,180,255,.12);
+            flex-shrink:0;
+        }
 
         /* ── Sound section ──────────────────────────────── */
         #sound-section { display:flex; flex-direction:column; gap:5px; }
@@ -308,29 +436,20 @@
 </div>
 
 <canvas id="c"></canvas>
+<div id="canvas-logo">Ball Bouncer</div>
 
 <!-- ── Control panel ──────────────────────────────────────────── -->
 <div id="panel">
 
     <!-- Logo -->
     <div id="logo">
-        <svg class="logo-ball" width="22" height="22" viewBox="0 0 20 20">
-            <defs>
-                <radialGradient id="lg" cx="35%" cy="28%" r="70%">
-                    <stop offset="0%"   stop-color="#ffffff" stop-opacity=".95"/>
-                    <stop offset="35%"  stop-color="#818cf8"/>
-                    <stop offset="100%" stop-color="#0a1060"/>
-                </radialGradient>
-            </defs>
-            <circle cx="10" cy="10" r="9.5" fill="url(#lg)"/>
-            <circle cx="7"  cy="6.5" r="2.2" fill="white" opacity=".45"/>
-        </svg>
+        <div class="logo-ball"></div>
         <div class="logo-title">Ball Bouncer</div>
     </div>
 
     <!-- Sound -->
     <div id="sound-section">
-        <div class="sec-title">Sound</div>
+        <div class="sec-title" data-i18n="sound">Sound</div>
         <div id="audio-bar">
             <div class="audio-row">
                 <button id="muteBtn" class="mute-btn" title="Toggle music">
@@ -365,7 +484,7 @@
     <!-- Shape -->
     <div>
         <div class="sec-header">
-            <div class="sec-title">Shape</div>
+            <div class="sec-title" data-i18n="shape">Shape</div>
             <button class="rnd-btn" id="rndShape" title="Random shape">&#8635;</button>
         </div>
         <div id="shape-grid"></div>
@@ -383,9 +502,21 @@
 
     <hr class="sep">
 
+    <!-- Direction controls -->
+    <div class="ctrl-pair" style="margin:0">
+        <button id="dirShape" class="dir-btn" title="Reverse shape rotation">
+            <span id="dirShapeLabel" class="dir-label">R</span>Shape
+        </button>
+        <button id="dirCross" class="dir-btn" title="Reverse cross rotation">
+            <span id="dirCrossLabel" class="dir-label">L</span>Cross
+        </button>
+    </div>
+
+    <hr class="sep">
+
     <!-- Cross -->
     <div>
-        <div class="sec-title">Cross</div>
+        <div class="sec-title" data-i18n="cross">Cross</div>
         <div id="cross-grid"></div>
         <div class="ctrl-pair" style="margin-top:6px">
             <div class="ctrl">
@@ -397,6 +528,26 @@
                 <input type="range" id="sCrossSpeed" min="0" max="20" value="3">
             </div>
         </div>
+        <label class="toggle-row">
+            <span data-i18n="crossHole">Cross Hole</span>
+            <span class="toggle-switch">
+                <input type="checkbox" id="crossHoleCheck">
+                <span class="toggle-track"></span>
+                <span class="toggle-thumb"></span>
+            </span>
+        </label>
+        <div class="hole-controls">
+            <span data-i18n="hole">Hole</span>
+            <input type="range" id="sCrossHoleSize" class="hole-ctrl-slider"
+                   min="1" max="2" value="1" step="1" title="Hole size">
+            <button id="holeCycleBtn" class="hole-cycle-btn" title="Advance to next arm">&#8635;</button>
+        </div>
+        <div class="hole-controls">
+            <span data-i18n="cycle">Cycle</span>
+            <input type="range" id="sCrossHoleTimeout" class="hole-ctrl-slider"
+                   min="1" max="10" value="5" step="1" title="Cycle speed">
+            <span id="vCrossHoleTimeout">5s</span>
+        </div>
     </div>
 
     <hr class="sep">
@@ -404,7 +555,7 @@
     <!-- Balls -->
     <div>
         <div class="sec-header">
-            <div class="sec-title">Ball Colors</div>
+            <div class="sec-title" data-i18n="ballColors">Ball Colors</div>
             <button class="rnd-btn" id="rndBallTheme" title="Random ball colors">&#8635;</button>
         </div>
         <div id="ball-theme-grid"></div>
@@ -445,13 +596,31 @@
     <!-- Background -->
     <div>
         <div class="sec-header">
-            <div class="sec-title">Background</div>
+            <div class="sec-title" data-i18n="background">Background</div>
             <button class="rnd-btn" id="rndFogTheme" title="Random background style">&#8635;</button>
         </div>
         <div id="fog-theme-grid"></div>
         <div class="ctrl" style="margin-top:6px">
-            <label>Fade <span id="vBg">20</span></label>
-            <input type="range" id="sBg" min="0" max="30" value="20">
+            <label data-i18n="animSpeed">Anim Speed</label>
+            <input type="range" id="sAnimSpeed" min="1" max="10" value="5">
+        </div>
+        <div class="rnd-row">
+            <label class="toggle-row">
+                <span data-i18n="randomBg">Random Bg</span>
+                <span class="toggle-switch">
+                    <input type="checkbox" id="rndBgCheck">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </span>
+            </label>
+            <label class="toggle-row">
+                <span data-i18n="randomTheme">Random Theme</span>
+                <span class="toggle-switch">
+                    <input type="checkbox" id="rndThemesCheck">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </span>
+            </label>
         </div>
     </div>
 
@@ -460,11 +629,27 @@
     <!-- Theme -->
     <div>
         <div class="sec-header">
-            <div class="sec-title">Theme</div>
+            <div class="sec-title" data-i18n="theme">Theme</div>
             <button class="rnd-btn" id="rndTheme" title="Random theme">&#8635;</button>
         </div>
         <div id="theme-grid"></div>
-        <button id="rndThemesCycle" class="rnd-themes-btn">&#10227; Random Themes</button>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Language -->
+    <div>
+        <div class="sec-title" data-i18n="language">Language</div>
+        <select id="langSelect" class="lang-select">
+            <option value="en">🇬🇧 English</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="pt">🇵🇹 Português</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="zh">🇨🇳 中文</option>
+        </select>
     </div>
 
 </div>
@@ -472,20 +657,28 @@
 'use strict';
 
 // ── Canvas setup ──────────────────────────────────────────────
-const c   = document.getElementById('c');
-const ctx = c.getContext('2d', { alpha: false });
+const c      = document.getElementById('c');
+const ctx    = c.getContext('2d', { alpha: false });
+const logoEl = document.getElementById('canvas-logo');
 const PANEL_W  = 220;
 const SUBSTEPS = 2;
 
 let W, H, cx, cy, SHAPE_R;
 let shapeSize = 47;
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
+let cachedAdW = 0;
 function resizeCanvas() {
     const adEl = document.getElementById('ad-left');
-    const adW  = adEl ? adEl.offsetWidth : 0;
-    c.width  = window.innerWidth - PANEL_W - adW;
-    c.height = window.innerHeight;
-    W = c.width; H = c.height; cx = W / 2; cy = H / 2;
+    cachedAdW  = adEl ? adEl.offsetWidth : 0;
+    const cssW = window.innerWidth - PANEL_W - cachedAdW;
+    const cssH = window.innerHeight;
+    c.width  = Math.round(cssW * DPR);
+    c.height = Math.round(cssH * DPR);
+    c.style.width  = cssW + 'px';
+    c.style.height = cssH + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    W = cssW; H = cssH; cx = W / 2; cy = H / 2;
     SHAPE_R = (shapeSize / 100) * 0.90 * Math.min(W, H);
 }
 resizeCanvas();
@@ -505,33 +698,35 @@ const THEMES = [
     { id:'toxic',  name:'Toxic',  swatch:'#aaff00', bg1:'#091400', bg2:'#040a00', shapeStroke:'#ccff44', shapeShadow:'#aaff00', shapeFill:'rgba(8,18,0,.55)',    dotFill:'#ddff88', dotShadow:'#aaff00', tick:'rgba(170,255,0,.22)',   accent:'#ccff44', glow15:'rgba(204,255,68,.15)',   glow70:'rgba(204,255,68,.70)',   panel:'#030600', panelBorder:'#091100', trackEmpty:'#091100' },
     { id:'forest', name:'Forest', swatch:'#00dd66', bg1:'#0a2010', bg2:'#050f08', shapeStroke:'#44ffaa', shapeShadow:'#00dd66', shapeFill:'rgba(0,20,10,.55)',   dotFill:'#88ffcc', dotShadow:'#00dd66', tick:'rgba(0,220,102,.22)',   accent:'#44ffaa', glow15:'rgba(68,255,170,.15)',   glow70:'rgba(68,255,170,.70)',   panel:'#040e05', panelBorder:'#0a1f0c', trackEmpty:'#0a1f0c' },
     { id:'mint',   name:'Mint',   swatch:'#00ffcc', bg1:'#061a14', bg2:'#030d0a', shapeStroke:'#44ffee', shapeShadow:'#00ffcc', shapeFill:'rgba(2,18,12,.55)',   dotFill:'#aaffee', dotShadow:'#00ffcc', tick:'rgba(0,255,204,.22)',   accent:'#44ffee', glow15:'rgba(68,255,238,.15)',   glow70:'rgba(68,255,238,.70)',   panel:'#020806', panelBorder:'#061510', trackEmpty:'#061510' },
-    { id:'cyber',  name:'Cyber',  swatch:'#00d4ff', bg1:'#1a2850', bg2:'#0a0f25', shapeStroke:'#22ccff', shapeShadow:'#00d4ff', shapeFill:'rgba(10,25,60,.55)',  dotFill:'#88eeff', dotShadow:'#00d4ff', tick:'rgba(0,180,255,.22)',   accent:'#00d4ff', glow15:'rgba(0,212,255,.15)',    glow70:'rgba(0,212,255,.70)',    panel:'#07071a', panelBorder:'#111128', trackEmpty:'#1a2a40' },
-    { id:'ice',    name:'Ice',    swatch:'#88ddff', bg1:'#081825', bg2:'#030a10', shapeStroke:'#aaeeff', shapeShadow:'#88ddff', shapeFill:'rgba(4,12,25,.55)',   dotFill:'#ddf5ff', dotShadow:'#88ddff', tick:'rgba(136,221,255,.22)', accent:'#aaeeff', glow15:'rgba(170,238,255,.15)',  glow70:'rgba(170,238,255,.70)',  panel:'#020608', panelBorder:'#091420', trackEmpty:'#091420' },
-    { id:'ocean',  name:'Ocean',  swatch:'#0088ff', bg1:'#001830', bg2:'#000d18', shapeStroke:'#44aaff', shapeShadow:'#0088ff', shapeFill:'rgba(0,15,30,.55)',   dotFill:'#88ccff', dotShadow:'#0088ff', tick:'rgba(0,136,255,.22)',   accent:'#44aaff', glow15:'rgba(68,170,255,.15)',   glow70:'rgba(68,170,255,.70)',   panel:'#00080f', panelBorder:'#001525', trackEmpty:'#001525' },
-    { id:'violet', name:'Violet', swatch:'#6644ff', bg1:'#0a0528', bg2:'#060212', shapeStroke:'#8866ff', shapeShadow:'#6644ff', shapeFill:'rgba(8,4,30,.55)',    dotFill:'#ccaaff', dotShadow:'#6644ff', tick:'rgba(102,68,255,.22)',  accent:'#8866ff', glow15:'rgba(136,102,255,.15)',  glow70:'rgba(136,102,255,.70)',  panel:'#030012', panelBorder:'#0a0520', trackEmpty:'#0a0520' },
-    { id:'galaxy', name:'Galaxy', swatch:'#9944ff', bg1:'#0a001e', bg2:'#05000f', shapeStroke:'#bb66ff', shapeShadow:'#9944ff', shapeFill:'rgba(14,0,28,.55)',   dotFill:'#ddaaff', dotShadow:'#9944ff', tick:'rgba(153,68,255,.22)',  accent:'#bb66ff', glow15:'rgba(187,102,255,.15)',  glow70:'rgba(187,102,255,.70)',  panel:'#030008', panelBorder:'#0a0018', trackEmpty:'#0a0018' },
-    { id:'neon',   name:'Neon',   swatch:'#ff00ff', bg1:'#1a0030', bg2:'#0a0018', shapeStroke:'#ff44ff', shapeShadow:'#ff00ff', shapeFill:'rgba(30,0,50,.55)',   dotFill:'#ffaaff', dotShadow:'#ff00ff', tick:'rgba(255,0,255,.22)',   accent:'#ff44ff', glow15:'rgba(255,68,255,.15)',   glow70:'rgba(255,68,255,.70)',   panel:'#090011', panelBorder:'#1c0030', trackEmpty:'#1c0030' },
-    { id:'sakura', name:'Sakura', swatch:'#ff55aa', bg1:'#1f0a15', bg2:'#0f0508', shapeStroke:'#ff88bb', shapeShadow:'#ff55aa', shapeFill:'rgba(30,5,15,.55)',   dotFill:'#ffbbdd', dotShadow:'#ff55aa', tick:'rgba(255,85,170,.22)',  accent:'#ff88bb', glow15:'rgba(255,136,187,.15)',  glow70:'rgba(255,136,187,.70)',  panel:'#0a0407', panelBorder:'#1a0810', trackEmpty:'#1a0810' },
+    { id:'cyber',  name:'SciFi',   swatch:'#00d4ff', bg1:'#1a2850', bg2:'#0a0f25', shapeStroke:'#22ccff', shapeShadow:'#00d4ff', shapeFill:'rgba(10,25,60,.55)',  dotFill:'#88eeff', dotShadow:'#00d4ff', tick:'rgba(0,180,255,.22)',   accent:'#00d4ff', glow15:'rgba(0,212,255,.15)',    glow70:'rgba(0,212,255,.70)',    panel:'#07071a', panelBorder:'#111128', trackEmpty:'#1a2a40' },
+    { id:'ice',    name:'Inferno', swatch:'#ff5500', bg1:'#220800', bg2:'#0e0300', shapeStroke:'#ff7711', shapeShadow:'#ff5500', shapeFill:'rgba(34,8,0,.55)',   dotFill:'#ffaa55', dotShadow:'#ff5500', tick:'rgba(255,85,0,.22)',    accent:'#ff7711', glow15:'rgba(255,119,17,.15)',   glow70:'rgba(255,119,17,.70)',   panel:'#0c0200', panelBorder:'#1e0500', trackEmpty:'#1e0500' },
+    { id:'ocean',  name:'Vibrant', swatch:'#ff0088', bg1:'#1e0018', bg2:'#0e000c', shapeStroke:'#ff44aa', shapeShadow:'#ff0088', shapeFill:'rgba(30,0,22,.55)',  dotFill:'#ffaadd', dotShadow:'#ff0088', tick:'rgba(255,0,136,.22)',   accent:'#ff44aa', glow15:'rgba(255,68,170,.15)',   glow70:'rgba(255,68,170,.70)',   panel:'#090011', panelBorder:'#1a0018', trackEmpty:'#1a0018' },
+    { id:'violet', name:'Aurora',  swatch:'#00ff88', bg1:'#001e12', bg2:'#000e09', shapeStroke:'#44ffaa', shapeShadow:'#00ff88', shapeFill:'rgba(0,22,12,.55)',  dotFill:'#88ffcc', dotShadow:'#00ff88', tick:'rgba(0,255,136,.22)',   accent:'#44ffaa', glow15:'rgba(68,255,170,.15)',   glow70:'rgba(68,255,170,.70)',   panel:'#000e07', panelBorder:'#001b0e', trackEmpty:'#001b0e' },
+    { id:'galaxy', name:'Galaxy',  swatch:'#9944ff', bg1:'#0a001e', bg2:'#05000f', shapeStroke:'#bb66ff', shapeShadow:'#9944ff', shapeFill:'rgba(14,0,28,.55)',  dotFill:'#ddaaff', dotShadow:'#9944ff', tick:'rgba(153,68,255,.22)',  accent:'#bb66ff', glow15:'rgba(187,102,255,.15)',  glow70:'rgba(187,102,255,.70)',  panel:'#030008', panelBorder:'#0a0018', trackEmpty:'#0a0018' },
+    { id:'neon',   name:'Neon',    swatch:'#ff00ff', bg1:'#1a0030', bg2:'#0a0018', shapeStroke:'#ff44ff', shapeShadow:'#ff00ff', shapeFill:'rgba(30,0,50,.55)',  dotFill:'#ffaaff', dotShadow:'#ff00ff', tick:'rgba(255,0,255,.22)',   accent:'#ff44ff', glow15:'rgba(255,68,255,.15)',   glow70:'rgba(255,68,255,.70)',   panel:'#090011', panelBorder:'#1c0030', trackEmpty:'#1c0030' },
+    { id:'plasma', name:'Plasma',  swatch:'#ff22cc', bg1:'#180020', bg2:'#0a0012', shapeStroke:'#ff44ee', shapeShadow:'#ff22cc', shapeFill:'rgba(28,0,36,.55)',  dotFill:'#ff99ff', dotShadow:'#ff22cc', tick:'rgba(255,34,204,.22)',  accent:'#ff44ee', glow15:'rgba(255,68,238,.15)',   glow70:'rgba(255,68,238,.70)',   panel:'#080010', panelBorder:'#180022', trackEmpty:'#180022' },
 ];
 let currentTheme = THEMES[0];
 
 // ── Ball color themes ──────────────────────────────────────────
+let _gradHue = 0;
 const BALL_THEMES = [
-    // Color-wheel order: red → orange → amber → yellow → lime → teal → blue → indigo → purple → magenta → pink → pearl/random
-    { id:'blood2',   name:'Blood',    swatch:'#aa0015', getHSL:()=>({ h:345+Math.random()*25,     s:85+Math.random()*15, l:32+Math.random()*18 }) },
-    { id:'fireball', name:'Fire',     swatch:'#ff4400', getHSL:()=>({ h:Math.random()*42,         s:92+Math.random()*8,  l:50+Math.random()*18 }) },
-    { id:'copper',   name:'Copper',   swatch:'#dd7722', getHSL:()=>({ h:22+Math.random()*16,      s:72+Math.random()*25, l:45+Math.random()*20 }) },
-    { id:'amber',    name:'Amber',    swatch:'#ffbb00', getHSL:()=>({ h:40+Math.random()*16,      s:92+Math.random()*8,  l:52+Math.random()*18 }) },
-    { id:'acid',     name:'Acid',     swatch:'#bbff00', getHSL:()=>({ h:72+Math.random()*38,      s:90+Math.random()*10, l:50+Math.random()*15 }) },
-    { id:'aurora',   name:'Aurora',   swatch:'#00ffbb', getHSL:()=>({ h:155+Math.random()*35,     s:82+Math.random()*18, l:52+Math.random()*20 }) },
-    { id:'iceball',  name:'Ice',      swatch:'#44bbff', getHSL:()=>({ h:198+Math.random()*38,     s:65+Math.random()*28, l:55+Math.random()*22 }) },
-    { id:'cosmos',   name:'Cosmos',   swatch:'#4422ee', getHSL:()=>({ h:248+Math.random()*50,     s:80+Math.random()*20, l:42+Math.random()*25 }) },
-    { id:'twilight', name:'Twilight', swatch:'#9922cc', getHSL:()=>({ h:288+Math.random()*45,     s:68+Math.random()*28, l:45+Math.random()*22 }) },
-    { id:'neonball', name:'Neon',     swatch:'#ff00ff', getHSL:()=>({ h:Math.random()*360,        s:95+Math.random()*5,  l:50+Math.random()*12 }) },
-    { id:'candy',    name:'Candy',    swatch:'#ff3399', getHSL:()=>({ h:315+Math.random()*55,     s:82+Math.random()*18, l:55+Math.random()*16 }) },
-    { id:'pastel',   name:'Pastel',   swatch:'#ffbbee', getHSL:()=>({ h:Math.random()*360,        s:38+Math.random()*28, l:72+Math.random()*18 }) },
-    { id:'rainbow',  name:'Rainbow',  swatch:'#ff4499', getHSL:()=>({ h:Math.random()*360,        s:92+Math.random()*8,  l:52+Math.random()*12 }) },
-    { id:'standard', name:'Pearl',    swatch:'#eeeeff', getHSL:()=>({ h:Math.random()*360,        s:8+Math.random()*22,  l:72+Math.random()*20 }) },
+    // Row 1 — pure rainbow single hues
+    { id:'r-red',    name:'Red',      swatch:'#ff2244', getHSL:()=>({ h:345+Math.random()*25,  s:90+Math.random()*10, l:45+Math.random()*20 }) },
+    { id:'r-orange', name:'Orange',   swatch:'#ff6600', getHSL:()=>({ h:18+Math.random()*16,   s:92+Math.random()*8,  l:52+Math.random()*16 }) },
+    { id:'r-yellow', name:'Yellow',   swatch:'#ffdd00', getHSL:()=>({ h:50+Math.random()*12,   s:90+Math.random()*10, l:54+Math.random()*14 }) },
+    { id:'r-green',  name:'Green',    swatch:'#22ee44', getHSL:()=>({ h:128+Math.random()*26,  s:78+Math.random()*18, l:44+Math.random()*20 }) },
+    { id:'r-cyan',   name:'Cyan',     swatch:'#00ddff', getHSL:()=>({ h:188+Math.random()*18,  s:88+Math.random()*12, l:52+Math.random()*16 }) },
+    { id:'r-blue',   name:'Blue',     swatch:'#2255ff', getHSL:()=>({ h:220+Math.random()*22,  s:85+Math.random()*15, l:50+Math.random()*18 }) },
+    { id:'r-violet', name:'Violet',   swatch:'#8833ff', getHSL:()=>({ h:268+Math.random()*24,  s:82+Math.random()*18, l:45+Math.random()*22 }) },
+    // Row 2 — themed effects
+    { id:'galaxy',   name:'Galaxy',   swatch:'#220055', getHSL:()=>({ h:248+Math.random()*72,  s:68+Math.random()*28, l:24+Math.random()*32 }) },
+    { id:'fireball', name:'Fire',     swatch:'#ff4400', getHSL:()=>({ h:Math.random()*42,      s:92+Math.random()*8,  l:50+Math.random()*18 }) },
+    { id:'ocean',    name:'Ocean',    swatch:'#0077cc', getHSL:()=>({ h:195+Math.random()*40,  s:72+Math.random()*22, l:40+Math.random()*28 }) },
+    { id:'neonball', name:'Neon',     swatch:'#ff00ff', getHSL:()=>({ h:Math.random()*360,     s:95+Math.random()*5,  l:50+Math.random()*12 }) },
+    { id:'rainbow',  name:'Rainbow',  swatch:'conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)', getHSL:()=>({ h:Math.random()*360, s:92+Math.random()*8, l:52+Math.random()*12 }) },
+    { id:'gradient', name:'Gradient', swatch:'linear-gradient(135deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f)', getHSL:()=>{ _gradHue=(_gradHue+24)%360; return {h:_gradHue,s:90,l:55}; } },
+    { id:'standard', name:'Pearl',    swatch:'#eeeeff', getHSL:()=>({ h:Math.random()*360,     s:8+Math.random()*22,  l:72+Math.random()*20 }) },
 ];
 let currentBallTheme = BALL_THEMES[0];
 
@@ -554,12 +749,13 @@ const FOG_THEMES = [
     { id:'firework',  name:'Firework',  swatch:'#ffaaff', tint:'fast' },
 ];
 let currentFogTheme = FOG_THEMES[0];
-let bgFade = 0, trailLength = 0, frameCount = 0;
+let bgFade = 15, trailLength = 0, frameCount = 0;
 
 // ── Background canvas ──────────────────────────────────────────
 const bgCanvas = document.createElement('canvas');
-bgCanvas.width = W; bgCanvas.height = H;
+bgCanvas.width = Math.round(W * DPR); bgCanvas.height = Math.round(H * DPR);
 const bgCtx = bgCanvas.getContext('2d');
+bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
 function rebuildBgCanvas() {
     const gr = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, SHAPE_R * 1.4);
@@ -752,6 +948,21 @@ function makePinwheelPts() {
     return pts;
 }
 
+function makeTriquetraPts() {
+    const pts = [];
+    const arms = 3, step = Math.PI * 2 / arms, sa = -Math.PI / 2;
+    for (let i = 0; i < arms; i++) {
+        const a = sa + i * step;
+        const px = Math.sin(a), py = -Math.cos(a);
+        pts.push([Math.cos(a) * 0.12 + px * 0.10, Math.sin(a) * 0.12 + py * 0.10]);
+        pts.push([Math.cos(a) * 0.62 + px * 0.60, Math.sin(a) * 0.62 + py * 0.60]);
+        pts.push([Math.cos(a),                     Math.sin(a)]);
+        pts.push([Math.cos(a) * 0.62 - px * 0.60, Math.sin(a) * 0.62 - py * 0.60]);
+        pts.push([Math.cos(a) * 0.12 - px * 0.10, Math.sin(a) * 0.12 - py * 0.10]);
+    }
+    return pts;
+}
+
 function makeStarCrossPts() {
     const pts = [];
     const arms = 4, step = Math.PI * 2 / arms, sa = -Math.PI / 2;
@@ -784,9 +995,16 @@ const CROSS_SHAPES = [
     { arms:10, armWidth:0.08, label:'10-Cross', sa:0 },
     { arms:10, armWidth:0.14, label:'Wide 10',  sa:0 },
     { arms:7,  armWidth:0.14, label:'7-Cross',  sa:-Math.PI/2 },
-    { custom:true, label:'Snowflake', pts: makeSnowflakePts() },
-    { custom:true, label:'Pinwheel',  pts: makePinwheelPts() },
-    { custom:true, label:'StarCross', pts: makeStarCrossPts() },
+    { custom:true, label:'Snowflake',  pts: makeSnowflakePts() },
+    { custom:true, label:'Pinwheel',   pts: makePinwheelPts() },
+    { custom:true, label:'StarCross',  pts: makeStarCrossPts() },
+    // Row 4 — more arm variants + custom
+    { arms:3,  armWidth:0.14, label:'Thin Y',  sa:-Math.PI/2 },
+    { arms:4,  armWidth:0.07, label:'Needle+', sa:-Math.PI/2 },
+    { arms:5,  armWidth:0.30, label:'Wide 5',  sa:-Math.PI/2 },
+    { arms:6,  armWidth:0.42, label:'Fat 6',   sa:0 },
+    { arms:9,  armWidth:0.11, label:'9-Cross', sa:0 },
+    { custom:true, label:'Triquetra', pts: makeTriquetraPts() },
 ];
 let currentCrossShape = CROSS_SHAPES[0];
 
@@ -1005,6 +1223,59 @@ sVolumeEl.addEventListener('input', function () {
 let gravity = 0.13, maxBallSpeed = 15, spin = 0.013;
 let shapeAngle = 0, INNER_R = SHAPE_R * 0.35;
 let innerShapeAngle = 0, innerSpin = 0.008;
+let shapeSpinSign = 1, innerSpinSign = 1;
+let crossHoleEnabled = false, crossHoleTip = null, crossHoleHalf = 1;
+let crossHoleArmIdx = 0, crossHoleNextChange = 0, crossHoleInterval = 5000;
+let logoArmIdx = 0, logoNextChange = 0;
+
+function getCrossTipCenter(iVerts) {
+    const n = iVerts.length;
+    let maxD = 0, tipX = cx, tipY = cy, capIdx = 0;
+    for (let i = 0; i < n; i++) {
+        const a = iVerts[i], b = iVerts[(i + 1) % n];
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const d = Math.hypot(mx - cx, my - cy);
+        if (d > maxD) { maxD = d; tipX = mx; tipY = my; capIdx = i; }
+    }
+    return { x: tipX, y: tipY, capIdx };
+}
+
+// Per-frame cache for custom arm tips (reset at start of update/draw)
+let _armTipsCache = null;
+
+// For custom shapes: find all arm tips as local distance maxima
+function getCustomArmTips(iVerts) {
+    if (_armTipsCache) return _armTipsCache;
+    const n = iVerts.length;
+    const dists = iVerts.map((v, i) => {
+        const b = iVerts[(i + 1) % n];
+        const mx = (v.x + b.x) / 2, my = (v.y + b.y) / 2;
+        return { mx, my, d: Math.hypot(mx - cx, my - cy), idx: i };
+    });
+    const threshold = INNER_R * 0.55;
+    const tips = [];
+    for (let i = 0; i < n; i++) {
+        const prev = dists[(i - 1 + n) % n].d;
+        const curr = dists[i].d;
+        const next = dists[(i + 1) % n].d;
+        if (curr >= prev && curr > next && curr > threshold) {
+            tips.push({ x: dists[i].mx, y: dists[i].my, capIdx: dists[i].idx });
+        }
+    }
+    _armTipsCache = tips.length > 0 ? tips : [getCrossTipCenter(iVerts)];
+    return _armTipsCache;
+}
+
+function getCrossTipForArm(iVerts, armIdx) {
+    const shape = currentCrossShape;
+    if (shape.custom || !shape.arms) {
+        const tips = getCustomArmTips(iVerts);
+        return tips[armIdx % tips.length];
+    }
+    const capIdx = (armIdx % shape.arms) * 3;
+    const a = iVerts[capIdx], b = iVerts[(capIdx + 1) % iVerts.length];
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, capIdx };
+}
 
 // ── Ball sprites ───────────────────────────────────────────────
 function makeBallSprite(h, s, l, r) {
@@ -1054,6 +1325,7 @@ function makeBall() {
         vx: (Math.random() * 2 - 1) * 4,
         vy: (Math.random() * 2 - 1) * 4,
         omega: 0, angle: 0,
+        insideCross: false,
         sprite: makeBallSprite(h, s, l, r),
     };
 }
@@ -1140,7 +1412,7 @@ SHAPES.forEach(shape => {
 const DEFAULTS = {
     balls:100, ballSize:_defaultR, gravity:5, ballSpeed:5, shapeSpeed:5, shapeSize:55,
     volume:10, ballSound:2, crossSize:50, crossSpeed:3,
-    bg:20, fogTrail:0, sizeRandomness:0,
+    animSpeed:5, fogTrail:0, sizeRandomness:0, crossHole:false, crossHoleSize:1, crossHoleTimeout:5,
     shapeIdx:3, crossIdx:0,
     themeId:'cyber', ballThemeId:'standard', fogThemeId:'standard',
     audioMuted:false, ballSoundMuted:false,
@@ -1161,7 +1433,7 @@ function saveSettings() {
         ballSound:     +document.getElementById('sBallSound').value,
         crossSize:     +document.getElementById('sCrossSize').value,
         crossSpeed:    +document.getElementById('sCrossSpeed').value,
-        bg:            +document.getElementById('sBg').value,
+        animSpeed:     +document.getElementById('sAnimSpeed').value,
         fogTrail:      +document.getElementById('sFogTrail').value,
         sizeRandomness:+document.getElementById('sSizeRandom').value,
         shapeIdx:      SHAPES.indexOf(currentShape),
@@ -1170,6 +1442,9 @@ function saveSettings() {
         ballThemeId:   currentBallTheme.id,
         fogThemeId:    currentFogTheme.id,
         audioMuted, ballSoundMuted,
+        crossHole: crossHoleEnabled,
+        crossHoleSize: crossHoleHalf,
+        crossHoleTimeout: Math.min(crossHoleInterval / 1000, 10),
     }));
 }
 
@@ -1188,7 +1463,7 @@ function applySettings(s) {
     set('sShapeSize',   s.shapeSize);
     set('sCrossSize',   s.crossSize);
     set('sCrossSpeed',  s.crossSpeed);
-    set('sBg',          s.bg ?? s.fog);
+    set('sAnimSpeed',   s.animSpeed ?? 5);
     set('sFogTrail',    s.fogTrail);
     set('sSizeRandom',  s.sizeRandomness);
     if (s.volume != null) {
@@ -1214,6 +1489,23 @@ function applySettings(s) {
     if (s.themeId)    { const t = THEMES.find(x => x.id === s.themeId);       if (t) setTheme(t);          }
     if (s.ballThemeId){ const t = BALL_THEMES.find(x => x.id === s.ballThemeId); if (t) setBallTheme(t, false); }
     if (s.fogThemeId) { const t = FOG_THEMES.find(x => x.id === s.fogThemeId);   if (t) setFogTheme(t, false);  }
+    if (s.crossHole != null) {
+        crossHoleEnabled = !!s.crossHole;
+        document.getElementById('crossHoleCheck').checked = crossHoleEnabled;
+        if (!crossHoleEnabled) balls.forEach(b => { b.insideCross = false; });
+    }
+    if (s.crossHoleSize != null) {
+        crossHoleHalf = s.crossHoleSize;
+        const el = document.getElementById('sCrossHoleSize');
+        el.value = crossHoleHalf; trackBg(el);
+    }
+    if (s.crossHoleTimeout != null) {
+        const v = Math.min(Math.max(1, s.crossHoleTimeout), 10);
+        crossHoleInterval = v * 1000;
+        const el = document.getElementById('sCrossHoleTimeout');
+        el.value = v; trackBg(el);
+        document.getElementById('vCrossHoleTimeout').textContent = v + 's';
+    }
     _suppressSave = false;
 }
 
@@ -1241,11 +1533,15 @@ function slider(id, valId, fn) {
 slider('sBalls',      'vBalls',      v => { while (balls.length < v) balls.push(makeBall()); balls.length = v; });
 slider('sBallSize',   'vBallSize',   v => { BALL_R = v; balls.forEach(b => { b.r = clampedR(); b.sprite = makeBallSprite(b.h, b.s, b.l, b.r); }); });
 slider('sSizeRandom', 'vSizeRandom', v => { sizeRandomness = v; balls.forEach(b => { b.r = clampedR(); b.sprite = makeBallSprite(b.h, b.s, b.l, b.r); }); });
-slider('sBg',         'vBg',         v => { bgFade = v; });
+{
+    const el = document.getElementById('sAnimSpeed');
+    el.addEventListener('input', () => { setAnimSpeed(+el.value); trackBg(el); saveSettings(); });
+    trackBg(el); setAnimSpeed(+el.value);
+}
 slider('sFogTrail',   'vFogTrail',   v => { trailLength = v; if (!v) balls.forEach(b => { b.trail = null; }); });
 slider('sGravity',    'vGravity',    v => { gravity = v * 0.026; });
 slider('sBallSpeed',  'vBallSpeed',  v => { maxBallSpeed = v * 3; });
-slider('sShapeSpeed', 'vShapeSpeed', v => { spin = v * 0.0026; });
+slider('sShapeSpeed', 'vShapeSpeed', v => { spin = v * 0.0026 * shapeSpinSign; });
 slider('sShapeSize',  'vShapeSize',  v => {
     shapeSize = v;
     SHAPE_R = (v / 100) * 0.90 * Math.min(W, H);
@@ -1261,14 +1557,40 @@ document.getElementById('sBallSound').addEventListener('input', function () {
 });
 trackBg(sVolumeEl);
 trackBg(document.getElementById('sBallSound'));
+trackBg(document.getElementById('sCrossHoleSize'));
+trackBg(document.getElementById('sCrossHoleTimeout'));
 
 function clampedR() {
     return Math.max(1, BALL_R + (Math.random() * 2 - 1) * sizeRandomness * BALL_R * 0.15);
 }
 
+// ── Animation speed ────────────────────────────────────────────
+function setAnimSpeed(v) {
+    const f = 5 / v; // v=5 → 1× (normal), v=1 → 5× (slowest), v=10 → 0.5× (fastest)
+    const root = document.documentElement;
+    root.style.setProperty('--ball-rtl-dur',   (3 * f).toFixed(2) + 's');
+    root.style.setProperty('--logo-sweep-dur', (3 * f).toFixed(2) + 's');
+    root.style.setProperty('--title-sweep-dur',(6 * f).toFixed(2) + 's');
+    root.style.setProperty('--title-glow-dur', (4 * f).toFixed(2) + 's');
+    root.style.setProperty('--icon-ball-dur',  (8 * f).toFixed(2) + 's');
+}
+
+// ── Dynamic hole size max ──────────────────────────────────────
+function updateHoleSizeMax() {
+    const iV = innerShapeVerts(innerShapeAngle);
+    const n  = iV.length;
+    const maxHalf = Math.max(1, Math.floor((n - 2) / 2));
+    const el = document.getElementById('sCrossHoleSize');
+    el.max = maxHalf;
+    if (+el.value > maxHalf) {
+        el.value = maxHalf;
+        crossHoleHalf = maxHalf;
+    }
+    trackBg(el);
+}
+
 // ── Random Themes cycle ────────────────────────────────────────
 let _cycleTimer = null, _cycleActive = false;
-const rndThemesCycleBtn = document.getElementById('rndThemesCycle');
 
 function scheduleNextCycle() {
     _cycleTimer = setTimeout(() => {
@@ -1283,12 +1605,103 @@ function scheduleNextCycle() {
     }, 20000 + Math.random() * 20000);
 }
 
-rndThemesCycleBtn.addEventListener('click', () => {
-    _cycleActive = !_cycleActive;
+document.getElementById('rndThemesCheck').addEventListener('change', function() {
+    _cycleActive = this.checked;
     clearTimeout(_cycleTimer);
     _cycleTimer = null;
-    rndThemesCycleBtn.classList.toggle('active', _cycleActive);
-    if (_cycleActive) scheduleNextCycle();
+    if (_cycleActive) {
+        _suppressSave = true;
+        setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
+        setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
+        setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
+        _suppressSave = false;
+        scheduleNextCycle();
+    }
+    saveSettings();
+});
+
+// ── Random Background cycle ────────────────────────────────────
+let _bgCycleTimer = null, _bgCycleActive = false;
+
+function scheduleNextBgCycle() {
+    _bgCycleTimer = setTimeout(() => {
+        if (!_bgCycleActive) return;
+        _suppressSave = true;
+        setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
+        _suppressSave = false;
+        saveSettings();
+        scheduleNextBgCycle();
+    }, 20000 + Math.random() * 20000);
+}
+
+document.getElementById('rndBgCheck').addEventListener('change', function() {
+    _bgCycleActive = this.checked;
+    clearTimeout(_bgCycleTimer);
+    _bgCycleTimer = null;
+    if (_bgCycleActive) {
+        _suppressSave = true;
+        setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
+        _suppressSave = false;
+        scheduleNextBgCycle();
+    }
+    saveSettings();
+});
+
+// ── Manual hole cycle button ───────────────────────────────────
+document.getElementById('holeCycleBtn').addEventListener('click', () => {
+    if (!crossHoleEnabled) return;
+    const iV0 = lastInnerVerts || innerShapeVerts(innerShapeAngle);
+    const numArms = currentCrossShape.custom
+        ? getCustomArmTips(iV0).length
+        : (currentCrossShape.arms || 4);
+    crossHoleArmIdx = (crossHoleArmIdx + 1) % numArms;
+    crossHoleNextChange = performance.now() + crossHoleInterval;
+});
+
+// ── Cross Hole toggle ──────────────────────────────────────────
+document.getElementById('crossHoleCheck').addEventListener('change', function() {
+    crossHoleEnabled = this.checked;
+    if (crossHoleEnabled) {
+        crossHoleArmIdx = 0;
+        crossHoleNextChange = performance.now() + crossHoleInterval;
+        const iVerts = lastInnerVerts || innerShapeVerts(innerShapeAngle);
+        const target = Math.max(3, Math.floor(balls.length * 0.05));
+        let seeded = 0;
+        for (let attempt = 0; seeded < target && attempt < 400; attempt++) {
+            const a = Math.random() * Math.PI * 2, d = INNER_R * (0.2 + Math.random() * 0.55);
+            const x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+            if (insidePoly(x, y, iVerts)) {
+                const b = balls.find(b => !b.insideCross);
+                if (!b) break;
+                b.x = x; b.y = y;
+                b.vx = (Math.random() * 2 - 1) * 6;
+                b.vy = (Math.random() * 2 - 1) * 6;
+                b.insideCross = true;
+                seeded++;
+            }
+        }
+    } else {
+        balls.forEach(b => { b.insideCross = false; });
+    }
+    saveSettings();
+});
+
+// ── Cross Hole size slider ──────────────────────────────────────
+document.getElementById('sCrossHoleSize').addEventListener('click', e => e.stopPropagation());
+document.getElementById('sCrossHoleSize').addEventListener('input', function() {
+    crossHoleHalf = parseInt(this.value, 10);
+    trackBg(this);
+    saveSettings();
+});
+
+document.getElementById('sCrossHoleTimeout').addEventListener('click', e => e.stopPropagation());
+document.getElementById('sCrossHoleTimeout').addEventListener('input', function() {
+    const v = parseInt(this.value, 10);
+    crossHoleInterval = v * 1000;
+    document.getElementById('vCrossHoleTimeout').textContent = v + 's';
+    if (crossHoleEnabled) crossHoleNextChange = performance.now() + crossHoleInterval;
+    trackBg(this);
+    saveSettings();
 });
 
 // ── Pause / Resume ─────────────────────────────────────────────
@@ -1369,11 +1782,51 @@ function respawnBall(ball) {
     ball.vx = (Math.random() * 2 - 1) * 3;
     ball.vy = (Math.random() * 2 - 1) * 3;
     ball.omega = 0;
+    ball.insideCross = false;
 }
 
 function wallCollide(ball, verts, wallSpin) {
     const n = verts.length;
     for (let i = 0; i < n; i++) {
+        const a = verts[i], b = verts[(i + 1) % n];
+        const edx = b.x - a.x, edy = b.y - a.y;
+        const lenSq = edx * edx + edy * edy;
+        if (!lenSq) continue;
+        const t    = Math.max(0, Math.min(1, ((ball.x - a.x) * edx + (ball.y - a.y) * edy) / lenSq));
+        const cpx  = a.x + t * edx, cpy = a.y + t * edy;
+        const dx   = ball.x - cpx, dy  = ball.y - cpy;
+        const dist = Math.hypot(dx, dy);
+        if (dist < ball.r && dist > 0) {
+            const nx  = dx / dist, ny  = dy / dist;
+            const evx = -wallSpin * (cpy - cy), evy = wallSpin * (cpx - cx);
+            const dvx = ball.vx - evx, dvy = ball.vy - evy;
+            const vn  = dvx * nx + dvy * ny;
+            if (vn < 0) {
+                ball.vx -= 1.8 * vn * nx;
+                ball.vy -= 1.8 * vn * ny;
+                const tx = -ny, ty = nx;
+                const vt = dvx * tx + dvy * ty - ball.omega * ball.r;
+                const fj = 0.22 * vt;
+                ball.vx -= fj * tx; ball.vy -= fj * ty;
+                ball.omega += fj / ball.r;
+                playBallHit(Math.hypot(ball.vx, ball.vy), ball.x);
+            }
+            ball.x += nx * (ball.r - dist);
+            ball.y += ny * (ball.r - dist);
+        }
+    }
+}
+
+function crossWallCollide(ball, verts, wallSpin) {
+    const n = verts.length;
+    const ci = crossHoleTip ? crossHoleTip.capIdx : -1;
+    const half = crossHoleHalf;
+    for (let i = 0; i < n; i++) {
+        if (ci >= 0) {
+            let d = (i - ci + n) % n;
+            if (d > n - d) d = n - d;
+            if (d <= half) continue;
+        }
         const a = verts[i], b = verts[(i + 1) % n];
         const edx = b.x - a.x, edy = b.y - a.y;
         const lenSq = edx * edx + edy * edy;
@@ -1493,7 +1946,22 @@ function ballCollide() {
 let lastVerts = null, lastInnerVerts = null;
 
 function update() {
+    _armTipsCache = null;
     soundsThisFrame = 0;
+    if (crossHoleEnabled) {
+        const now = performance.now();
+        const iV0 = innerShapeVerts(innerShapeAngle);
+        if (now >= crossHoleNextChange) {
+            const numArms = currentCrossShape.custom
+                ? getCustomArmTips(iV0).length
+                : (currentCrossShape.arms || 4);
+            crossHoleArmIdx = (crossHoleArmIdx + 1) % numArms;
+            crossHoleNextChange = now + crossHoleInterval;
+        }
+        crossHoleTip = getCrossTipForArm(iV0, crossHoleArmIdx);
+    } else {
+        crossHoleTip = null;
+    }
     const subSpin      = spin / SUBSTEPS;
     const subInnerSpin = innerSpin / SUBSTEPS;
     for (let s = 0; s < SUBSTEPS; s++) {
@@ -1512,10 +1980,19 @@ function update() {
             ball.angle += ball.omega / SUBSTEPS;
             ball.omega *= 0.9985;
             wallCollide(ball, verts,  spin);
-            wallCollide(ball, iVerts, -innerSpin);
+            if (crossHoleEnabled) {
+                crossWallCollide(ball, iVerts, -innerSpin);
+            } else {
+                wallCollide(ball, iVerts, -innerSpin);
+            }
             boundarySafety(ball);
             containBall(ball, verts);
-            containBallOutside(ball, iVerts);
+            if (crossHoleEnabled) {
+                ball.insideCross = insidePoly(ball.x, ball.y, iVerts);
+            } else {
+                ball.insideCross = false;
+                containBallOutside(ball, iVerts);
+            }
             spd = Math.hypot(ball.vx, ball.vy);
             if (spd > maxBallSpeed * 1.6) { const f = maxBallSpeed * 1.6 / spd; ball.vx *= f; ball.vy *= f; }
         }
@@ -1530,16 +2007,43 @@ function update() {
     }
 }
 
+// ── Portal dot (3D sphere like ball icon) ──────────────────────
+function drawPortalDot(px, py, r) {
+    const gr = ctx.createRadialGradient(
+        px - r * 0.32, py - r * 0.35, r * 0.04,
+        px, py, r
+    );
+    gr.addColorStop(0,    '#ffffff');
+    gr.addColorStop(0.28, currentTheme.shapeStroke);
+    gr.addColorStop(1,    currentTheme.shapeShadow);
+    ctx.save();
+    ctx.shadowBlur  = 28;
+    ctx.shadowColor = currentTheme.shapeStroke;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fillStyle = gr; ctx.fill();
+    // Specular highlight
+    const hl = ctx.createRadialGradient(
+        px - r * 0.30, py - r * 0.36, 0,
+        px - r * 0.15, py - r * 0.18, r * 0.42
+    );
+    hl.addColorStop(0, 'rgba(255,255,255,.84)');
+    hl.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fillStyle = hl; ctx.fill();
+    ctx.restore();
+}
+
 // ── Draw ───────────────────────────────────────────────────────
 function getFogTint() {
     const t = currentFogTheme.tint;
     if (!t) return null;
-    if (t === 'cycle') return `hsl(${(frameCount * 2) % 360},90%,50%)`;
-    if (t === 'fast')  return `hsl(${(frameCount * 7) % 360},100%,65%)`;
+    if (t === 'cycle') return `hsl(${(frameCount * 0.5) % 360},90%,50%)`;
+    if (t === 'fast')  return `hsl(${(frameCount * 2.5) % 360},100%,65%)`;
     return `rgb(${t})`;
 }
 
 function draw() {
+    _armTipsCache = null;
     const verts  = lastVerts      || shapeVerts(shapeAngle);
     const iVerts = lastInnerVerts || innerShapeVerts(innerShapeAngle);
     const { star, sides } = currentShape;
@@ -1594,6 +2098,32 @@ function draw() {
         }
     }
 
+    // "Ball Bouncer" logo — orbits a random arm, changing every 10-20 seconds
+    {
+        const nowLogo = performance.now();
+        const iVertsLogo = lastInnerVerts || innerShapeVerts(innerShapeAngle);
+        if (nowLogo >= logoNextChange) {
+            const numA = currentCrossShape.custom
+                ? getCustomArmTips(iVertsLogo).length
+                : (currentCrossShape.arms || 4);
+            let next;
+            do { next = Math.floor(Math.random() * numA); } while (next === logoArmIdx && numA > 1);
+            logoArmIdx = next;
+            logoNextChange = nowLogo + 10000 + Math.random() * 10000;
+        }
+        const logoTip  = getCrossTipForArm(iVertsLogo, logoArmIdx);
+        const tipX     = logoTip.x;
+        const tipY     = logoTip.y;
+        const tipAngle = Math.atan2(tipY - cy, tipX - cx);
+        const logoSz   = Math.max(10, Math.min(22, INNER_R * 0.18));
+        const logoX    = cx + Math.cos(tipAngle) * (INNER_R + logoSz * 1.6);
+        const logoY    = cy + Math.sin(tipAngle) * (INNER_R + logoSz * 1.6);
+        logoEl.style.left      = `${cachedAdW + logoX}px`;
+        logoEl.style.top       = `${logoY}px`;
+        logoEl.style.transform = `translate(-50%,-50%) rotate(${tipAngle + Math.PI / 2}rad)`;
+        logoEl.style.fontSize  = `${logoSz}px`;
+    }
+
     // Inner cross
     ctx.beginPath();
     iVerts.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
@@ -1603,7 +2133,29 @@ function draw() {
     ctx.save();
     ctx.shadowBlur = 20; ctx.shadowColor = currentTheme.shapeShadow;
     ctx.strokeStyle = currentTheme.shapeStroke; ctx.lineWidth = 2;
-    ctx.stroke();
+    if (crossHoleEnabled && crossHoleTip) {
+        const ni   = iVerts.length;
+        const ci   = crossHoleTip.capIdx;
+        const half = crossHoleHalf;
+        let pathOpen = false;
+        ctx.beginPath();
+        for (let i = 0; i < ni; i++) {
+            let d = (i - ci + ni) % ni;
+            if (d > ni - d) d = ni - d;
+            if (d <= half) { pathOpen = false; continue; }
+            const a = iVerts[i], b = iVerts[(i + 1) % ni];
+            if (!pathOpen) { ctx.moveTo(a.x, a.y); pathOpen = true; }
+            ctx.lineTo(b.x, b.y);
+        }
+        ctx.stroke();
+        // Portal dots — 3D spheres at gap terminations
+        const gA = iVerts[(ci - half + ni) % ni];
+        const gB = iVerts[(ci + half + 1) % ni];
+        drawPortalDot(gA.x, gA.y, 7);
+        drawPortalDot(gB.x, gB.y, 7);
+    } else {
+        ctx.stroke();
+    }
     ctx.restore();
 
     // Comet trails
@@ -1644,8 +2196,10 @@ function draw() {
         ctx.restore();
     }
 
-    // Balls with spin rotation
+    // Balls with spin rotation (skip off-screen balls)
     for (const ball of balls) {
+        if (ball.x + ball.r < 0 || ball.x - ball.r > W ||
+            ball.y + ball.r < 0 || ball.y - ball.r > H) continue;
         const off = 1 + ball.r;
         ctx.save();
         ctx.translate(ball.x, ball.y);
@@ -1675,13 +2229,16 @@ CROSS_SHAPES.forEach(shape => {
         crossGrid.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentCrossShape = shape;
+        crossHoleArmIdx = 0;
+        crossHoleNextChange = performance.now() + crossHoleInterval;
+        updateHoleSizeMax();
         saveSettings();
     });
     crossGrid.appendChild(btn);
 });
 
-slider('sCrossSize',  'vCrossSize',  v => { INNER_R = (v / 100) * 0.65 * SHAPE_R; });
-slider('sCrossSpeed', 'vCrossSpeed', v => { innerSpin = v * 0.0026; });
+slider('sCrossSize',  'vCrossSize',  v => { INNER_R = (v / 100) * 0.65 * SHAPE_R; updateHoleSizeMax(); });
+slider('sCrossSpeed', 'vCrossSpeed', v => { innerSpin = v * 0.0026 * innerSpinSign; });
 
 // ── Theme functions ────────────────────────────────────────────
 function setTheme(theme) {
@@ -1770,7 +2327,55 @@ FOG_THEMES.forEach(theme => {
     document.getElementById('fog-theme-grid').appendChild(btn);
 });
 
+// ── i18n ───────────────────────────────────────────────────────
+const STRINGS = {
+    en: { sound:'Sound', shape:'Shape', cross:'Cross', crossHole:'Cross Hole', ballColors:'Ball Colors', background:'Background', theme:'Theme', language:'Language', hole:'Hole', cycle:'Cycle', randomBg:'Random Bg', randomTheme:'Random Theme', animSpeed:'Anim Speed' },
+    de: { sound:'Ton', shape:'Form', cross:'Kreuz', crossHole:'Kreuzloch', ballColors:'Ballfarben', background:'Hintergrund', theme:'Thema', language:'Sprache', hole:'Loch', cycle:'Wechsel', randomBg:'Zuf. Bg', randomTheme:'Zuf. Thema', animSpeed:'Animtempo' },
+    es: { sound:'Sonido', shape:'Forma', cross:'Cruz', crossHole:'Agujero Cruz', ballColors:'Colores Bola', background:'Fondo', theme:'Tema', language:'Idioma', hole:'Agujero', cycle:'Ciclo', randomBg:'Bg Aleatorio', randomTheme:'Tema Aleatorio', animSpeed:'Vel. Anim.' },
+    fr: { sound:'Son', shape:'Forme', cross:'Croix', crossHole:'Trou Croix', ballColors:'Couleurs Balle', background:'Arrière-plan', theme:'Thème', language:'Langue', hole:'Trou', cycle:'Cycle', randomBg:'Bg Aléat.', randomTheme:'Thème Aléat.', animSpeed:'Vit. Anim.' },
+    it: { sound:'Suono', shape:'Forma', cross:'Croce', crossHole:'Buco Croce', ballColors:'Colori Palla', background:'Sfondo', theme:'Tema', language:'Lingua', hole:'Buco', cycle:'Ciclo', randomBg:'Bg Casuale', randomTheme:'Tema Casuale', animSpeed:'Vel. Anim.' },
+    pt: { sound:'Som', shape:'Forma', cross:'Cruz', crossHole:'Buraco Cruz', ballColors:'Cores Bola', background:'Plano de Fundo', theme:'Tema', language:'Idioma', hole:'Buraco', cycle:'Ciclo', randomBg:'Bg Aleatório', randomTheme:'Tema Aleatório', animSpeed:'Vel. Anim.' },
+    ja: { sound:'サウンド', shape:'形', cross:'クロス', crossHole:'穴', ballColors:'ボール色', background:'背景', theme:'テーマ', language:'言語', hole:'穴', cycle:'サイクル', randomBg:'ランダムBg', randomTheme:'ランダムテーマ', animSpeed:'アニメ速度' },
+    zh: { sound:'声音', shape:'形状', cross:'十字', crossHole:'十字孔', ballColors:'球颜色', background:'背景', theme:'主题', language:'语言', hole:'孔', cycle:'循环', randomBg:'随机背景', randomTheme:'随机主题', animSpeed:'动画速度' },
+};
+let currentLang = 'en';
+
+function setLang(code) {
+    if (!STRINGS[code]) return;
+    currentLang = code;
+    const s = STRINGS[code];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (s[key] != null) el.textContent = s[key];
+    });
+    document.getElementById('langSelect').value = code;
+    localStorage.setItem('bb_lang', code);
+}
+
+// Auto-detect browser language on load
+{
+    const saved = localStorage.getItem('bb_lang');
+    const detected = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    setLang(saved || (STRINGS[detected] ? detected : 'en'));
+}
+
+document.getElementById('langSelect').addEventListener('change', function() {
+    setLang(this.value);
+});
+
 // ── Random buttons ─────────────────────────────────────────────
+// ── Direction buttons ──────────────────────────────────────────
+document.getElementById('dirShape').addEventListener('click', function() {
+    shapeSpinSign = -shapeSpinSign;
+    spin = -spin;
+    document.getElementById('dirShapeLabel').textContent = shapeSpinSign >= 0 ? 'R' : 'L';
+});
+document.getElementById('dirCross').addEventListener('click', function() {
+    innerSpinSign = -innerSpinSign;
+    innerSpin = -innerSpin;
+    document.getElementById('dirCrossLabel').textContent = innerSpinSign < 0 ? 'R' : 'L';
+});
+
 document.getElementById('rndShape').addEventListener('click', () => {
     const btns = [...shapeGrid.querySelectorAll('.shape-btn')];
     btns[Math.floor(Math.random() * btns.length)]?.click();
@@ -1811,7 +2416,8 @@ window.addEventListener('resize', () => {
             ball.sprite = makeBallSprite(ball.h, ball.s, ball.l, ball.r);
         });
     }
-    bgCanvas.width  = W; bgCanvas.height = H;
+    bgCanvas.width  = Math.round(W * DPR); bgCanvas.height = Math.round(H * DPR);
+    bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
     INNER_R = SHAPE_R * 0.65 * (+document.getElementById('sCrossSize').value / 100);
     rebuildBgCanvas();
     balls.forEach(respawnBall);
@@ -1874,6 +2480,7 @@ window.addEventListener('resize', () => {
 })();
 
 loadSettings();
+updateHoleSizeMax();
 // Randomize all themes on every startup
 _suppressSave = true;
 setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
