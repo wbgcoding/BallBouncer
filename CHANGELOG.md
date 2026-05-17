@@ -4,6 +4,24 @@ All notable changes to Ball Bouncer are documented here.
 
 ---
 
+## [1.5.0] - 2026-05-17
+
+### New Features
+- **Language-aware ad label** — top-left label reads "AD" (EN), "Werbung" (DE), "Anuncio" (ES), "Pub" (FR), etc.; auto-updates on language change
+- **Everything Cycle progress bar** — reverse countdown bar under the "Everything Random" button shows time remaining until next randomization
+- **5 s / 10 s interval presets** — two small buttons below the cycle button let you switch the auto-randomize interval; selected preset is highlighted
+- **"EVERYTHING IS CRAZY RANDOM" mode** — button text changes while the cycle is active to make it unmistakably clear
+- **Cycle activates theme loops** — enabling the cycle button now also enables "Random Theme" and "Random Bg" toggles for smooth continuous variety; disabling the cycle reverts both
+
+### Improvements
+- **Panel layout rework** — Sound (Ton) section moved above Everything Random for a more logical flow
+- **Pause halts all cycles** — pressing Pause now freezes every auto-cycle (shapes, cross, themes, background, everything-random) and pauses the countdown bar; Resume restarts them all
+- **Cross Hole controls dim when disabled** — hole size and cycle sliders become visually greyed out when Cross Hole is toggled off, making the panel state immediately readable
+- **Floating logo scales with cross size** — canvas "Ball Bouncer" label now stays proportionally near the cross arm tip regardless of cross size (small or large)
+- **SEO overhaul** — full Open Graph, Twitter card, JSON-LD structured data, canonical URL, and robots meta; `vercel.json` updated with security headers and proper rewrites
+
+---
+
 ## [1.4.0] - 2026-05-17
 
 ### New Features
