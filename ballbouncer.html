@@ -54,28 +54,42 @@
         .rnd-row { display:flex; gap:6px; margin-top:6px; }
         .rnd-row .toggle-row { flex:1; font-size:8px; padding:2px 0; margin-top:0; }
 
-        /* ── Ad column ─────────────────────────────────── */
+        /* ── Ad column — floating overlay ───────────────── */
         #ad-left {
-            width:160px; flex-shrink:0;
-            background:#060616;
-            border-right:1px solid #0e1628;
+            position:fixed; left:0; top:0;
+            width:160px; height:100vh; z-index:100;
             display:flex; flex-direction:column; align-items:center;
-            padding:14px 10px; gap:14px; overflow:hidden;
+            padding:14px 8px 10px; gap:8px; overflow:hidden;
+            background:linear-gradient(175deg,rgba(6,6,26,.90) 0%,rgba(4,4,16,.82) 100%);
+            backdrop-filter:blur(18px) saturate(1.3);
+            -webkit-backdrop-filter:blur(18px) saturate(1.3);
+            border-right:1px solid rgba(0,212,255,.10);
+            box-shadow:4px 0 50px rgba(0,0,0,.75), inset -1px 0 0 rgba(0,212,255,.06);
         }
-        @media (max-width:960px) { #ad-left { display:none; } }
+        #ad-left::after {
+            content:''; position:absolute; top:0; left:0; right:0; height:40px;
+            background:linear-gradient(to bottom,rgba(0,212,255,.04),transparent);
+            pointer-events:none;
+        }
+        @media (max-width:800px) { #ad-left { display:none; } }
 
         .ad-label {
-            font-size:8px; letter-spacing:.22em; text-transform:uppercase;
-            color:#18263a; width:100%; text-align:center;
+            font-size:7px; letter-spacing:.28em; text-transform:uppercase;
+            color:rgba(255,255,255,.10); width:100%; text-align:center; flex-shrink:0;
         }
         .ad-placeholder {
-            width:140px; height:300px;
-            border:1px dashed #131326; border-radius:6px;
+            flex:1; width:140px;
+            border:1px dashed rgba(0,212,255,.07); border-radius:8px;
             display:flex; flex-direction:column;
             align-items:center; justify-content:center; gap:8px;
+            background:rgba(0,212,255,.015);
         }
-        .ad-placeholder-icon { font-size:22px; opacity:.15; }
-        .ad-placeholder span { font-size:9px; color:#18263a; text-align:center; line-height:1.7; letter-spacing:.08em; }
+        .ad-placeholder-icon { font-size:18px; opacity:.08; }
+        .ad-placeholder span { font-size:8px; color:rgba(255,255,255,.10); text-align:center; line-height:1.7; letter-spacing:.08em; }
+        .ad-footer {
+            flex-shrink:0; font-size:8px; font-weight:700; letter-spacing:.14em;
+            text-transform:uppercase; color:rgba(0,212,255,.18);
+        }
 
         /* ── Panel ─────────────────────────────────────── */
         #panel {
@@ -418,7 +432,7 @@
         Google AdSense setup:
         1. Replace ca-pub-XXXXXXXXXXXXXXXX with your Publisher ID
         2. Replace XXXXXXXXXX with your Ad Slot ID
-        3. Uncomment the three blocks below
+        3. Uncomment the ins block below (use "auto" format for full-height fill)
     -->
     <!--
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
@@ -431,8 +445,9 @@
     -->
     <div class="ad-placeholder">
         <div class="ad-placeholder-icon">◈</div>
-        <span>Ad Space<br>160 × 600</span>
+        <span>Ad Space<br>160 × full</span>
     </div>
+    <div class="ad-footer">Ball Bouncer</div>
 </div>
 
 <canvas id="c"></canvas>
@@ -589,6 +604,10 @@
                 <input type="range" id="sFogTrail" min="0" max="30" value="0">
             </div>
         </div>
+        <div class="ctrl">
+            <label>G-Angle <span id="vGravityAngle">0</span>°</label>
+            <input type="range" id="sGravityAngle" min="0" max="359" value="0">
+        </div>
     </div>
 
     <hr class="sep">
@@ -669,9 +688,8 @@ const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
 let cachedAdW = 0;
 function resizeCanvas() {
-    const adEl = document.getElementById('ad-left');
-    cachedAdW  = adEl ? adEl.offsetWidth : 0;
-    const cssW = window.innerWidth - PANEL_W - cachedAdW;
+    cachedAdW = 0; // ad-left is a fixed overlay; canvas extends underneath it
+    const cssW = window.innerWidth - PANEL_W;
     const cssH = window.innerHeight;
     c.width  = Math.round(cssW * DPR);
     c.height = Math.round(cssH * DPR);
@@ -1220,7 +1238,7 @@ sVolumeEl.addEventListener('input', function () {
 });
 
 // ── Physics state ──────────────────────────────────────────────
-let gravity = 0.13, maxBallSpeed = 15, spin = 0.013;
+let gravity = 0.13, gravityAngle = 0, maxBallSpeed = 15, spin = 0.013;
 let shapeAngle = 0, INNER_R = SHAPE_R * 0.35;
 let innerShapeAngle = 0, innerSpin = 0.008;
 let shapeSpinSign = 1, innerSpinSign = 1;
@@ -1412,7 +1430,7 @@ SHAPES.forEach(shape => {
 const DEFAULTS = {
     balls:100, ballSize:_defaultR, gravity:5, ballSpeed:5, shapeSpeed:5, shapeSize:55,
     volume:10, ballSound:2, crossSize:50, crossSpeed:3,
-    animSpeed:5, fogTrail:0, sizeRandomness:0, crossHole:false, crossHoleSize:1, crossHoleTimeout:5,
+    animSpeed:5, fogTrail:0, sizeRandomness:0, gravityAngle:0, crossHole:false, crossHoleSize:1, crossHoleTimeout:5,
     shapeIdx:3, crossIdx:0,
     themeId:'cyber', ballThemeId:'standard', fogThemeId:'standard',
     audioMuted:false, ballSoundMuted:false,
@@ -1434,6 +1452,7 @@ function saveSettings() {
         crossSize:     +document.getElementById('sCrossSize').value,
         crossSpeed:    +document.getElementById('sCrossSpeed').value,
         animSpeed:     +document.getElementById('sAnimSpeed').value,
+        gravityAngle:  +document.getElementById('sGravityAngle').value,
         fogTrail:      +document.getElementById('sFogTrail').value,
         sizeRandomness:+document.getElementById('sSizeRandom').value,
         shapeIdx:      SHAPES.indexOf(currentShape),
@@ -1464,6 +1483,7 @@ function applySettings(s) {
     set('sCrossSize',   s.crossSize);
     set('sCrossSpeed',  s.crossSpeed);
     set('sAnimSpeed',   s.animSpeed ?? 5);
+    set('sGravityAngle', s.gravityAngle ?? 0);
     set('sFogTrail',    s.fogTrail);
     set('sSizeRandom',  s.sizeRandomness);
     if (s.volume != null) {
@@ -1540,6 +1560,7 @@ slider('sSizeRandom', 'vSizeRandom', v => { sizeRandomness = v; balls.forEach(b 
 }
 slider('sFogTrail',   'vFogTrail',   v => { trailLength = v; if (!v) balls.forEach(b => { b.trail = null; }); });
 slider('sGravity',    'vGravity',    v => { gravity = v * 0.026; });
+slider('sGravityAngle', 'vGravityAngle', v => { gravityAngle = v; });
 slider('sBallSpeed',  'vBallSpeed',  v => { maxBallSpeed = v * 3; });
 slider('sShapeSpeed', 'vShapeSpeed', v => { spin = v * 0.0026 * shapeSpinSign; });
 slider('sShapeSize',  'vShapeSize',  v => {
@@ -1810,6 +1831,7 @@ function wallCollide(ball, verts, wallSpin) {
                 ball.vx -= fj * tx; ball.vy -= fj * ty;
                 ball.omega += fj / ball.r;
                 playBallHit(Math.hypot(ball.vx, ball.vy), ball.x);
+                if (Math.abs(vn) > 1.5) addSparks(ball, cpx, cpy);
             }
             ball.x += nx * (ball.r - dist);
             ball.y += ny * (ball.r - dist);
@@ -1849,6 +1871,7 @@ function crossWallCollide(ball, verts, wallSpin) {
                 ball.vx -= fj * tx; ball.vy -= fj * ty;
                 ball.omega += fj / ball.r;
                 playBallHit(Math.hypot(ball.vx, ball.vy), ball.x);
+                if (Math.abs(vn) > 1.5) addSparks(ball, cpx, cpy);
             }
             ball.x += nx * (ball.r - dist);
             ball.y += ny * (ball.r - dist);
@@ -1971,7 +1994,9 @@ function update() {
         const iVerts = innerShapeVerts(innerShapeAngle);
         if (s === SUBSTEPS - 1) { lastVerts = verts; lastInnerVerts = iVerts; }
         for (const ball of balls) {
-            ball.vy += gravity / SUBSTEPS;
+            const _gRad = gravityAngle * Math.PI / 180;
+            ball.vx += Math.sin(_gRad) * gravity / SUBSTEPS;
+            ball.vy += Math.cos(_gRad) * gravity / SUBSTEPS;
             let spd = Math.hypot(ball.vx, ball.vy);
             if (spd > maxBallSpeed) { const f = maxBallSpeed / spd; ball.vx *= f; ball.vy *= f; }
             ball.vx *= 0.9994; ball.vy *= 0.9994;
@@ -2031,6 +2056,29 @@ function drawPortalDot(px, py, r) {
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
     ctx.fillStyle = hl; ctx.fill();
     ctx.restore();
+}
+
+// ── Collision sparks ───────────────────────────────────────────
+const sparks = [];
+const MAX_SPARKS = 300;
+
+function addSparks(ball, wx, wy) {
+    if (sparks.length >= MAX_SPARKS) return;
+    const count = 3 + Math.floor(Math.random() * 3);
+    const hue   = `hsl(${ball.h},${ball.s}%,${Math.min(ball.l + 25, 95)}%)`;
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spd   = 0.8 + Math.random() * 2.5;
+        sparks.push({
+            x: wx, y: wy,
+            vx: Math.cos(angle) * spd + ball.vx * 0.12,
+            vy: Math.sin(angle) * spd + ball.vy * 0.12,
+            life: 1.0,
+            decay: 0.06 + Math.random() * 0.08,
+            r: 1.0 + Math.random() * 1.8,
+            color: hue,
+        });
+    }
 }
 
 // ── Draw ───────────────────────────────────────────────────────
@@ -2192,6 +2240,31 @@ function draw() {
                 }
                 ctx.stroke();
             }
+        }
+        ctx.restore();
+    }
+
+    // Collision sparks
+    if (sparks.length > 0) {
+        ctx.save();
+        const _gRad = gravityAngle * Math.PI / 180;
+        const _gx = Math.sin(_gRad) * gravity * 0.25;
+        const _gy = Math.cos(_gRad) * gravity * 0.25;
+        for (let i = sparks.length - 1; i >= 0; i--) {
+            const s = sparks[i];
+            s.x  += s.vx; s.y += s.vy;
+            s.vx *= 0.97; s.vy *= 0.97;
+            s.vx += _gx;  s.vy += _gy;
+            s.life -= s.decay;
+            if (s.life <= 0) { sparks.splice(i, 1); continue; }
+            const alpha = s.life * s.life;
+            ctx.globalAlpha = alpha;
+            ctx.shadowBlur  = 6;
+            ctx.shadowColor = s.color;
+            ctx.fillStyle   = s.color;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r * s.life, 0, Math.PI * 2);
+            ctx.fill();
         }
         ctx.restore();
     }
