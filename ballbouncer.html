@@ -284,6 +284,34 @@
         #muteBtn     .btn-icon { color:#aaddee; font-size:15px; }
         #ballMuteBtn .btn-icon { color:#5588aa; font-size:17px; }
 
+        /* ── Dir mini-button (shows both L and R) ──────── */
+        .dir-btn-mini {
+            flex-shrink:0;
+            background:#0b1222; border:1.5px solid #162030;
+            border-radius:4px; cursor:pointer;
+            display:flex; align-items:center; gap:1px;
+            height:20px; padding:0 3px;
+            transition:border-color .15s, background .15s;
+        }
+        .dir-btn-mini:hover { border-color:#006688; background:#0d1830; }
+        .dir-btn-mini:active { transform:scale(0.95); }
+        .dir-badge {
+            font-size:9px; font-weight:800; letter-spacing:.03em;
+            color:#2e5070; padding:1px 4px; border-radius:2px;
+            transition:color .15s, background .15s;
+        }
+        .dir-badge.on { color:var(--accent); background:rgba(0,180,255,.14); }
+
+        /* ── Bottom-left logo ───────────────────────────── */
+        #logo-bl {
+            position:fixed; left:8px; bottom:8px; z-index:50;
+            display:flex; align-items:center; gap:5px;
+            pointer-events:none; opacity:0.50;
+        }
+        @media (min-width:801px) { #logo-bl { left:168px; } }
+        #logo-bl .logo-ball  { width:14px; height:14px; }
+        #logo-bl .logo-title { font-size:11px; }
+
         /* ── Action row (Pause + Reset) ─────────────────── */
         .action-row { display:flex; gap:6px; }
 
@@ -453,6 +481,12 @@
 <canvas id="c"></canvas>
 <div id="canvas-logo">Ball Bouncer</div>
 
+<!-- Bottom-left logo mirror -->
+<div id="logo-bl">
+    <div class="logo-ball"></div>
+    <div class="logo-title">Ball Bouncer</div>
+</div>
+
 <!-- ── Control panel ──────────────────────────────────────────── -->
 <div id="panel">
 
@@ -460,27 +494,6 @@
     <div id="logo">
         <div class="logo-ball"></div>
         <div class="logo-title">Ball Bouncer</div>
-    </div>
-
-    <!-- Sound -->
-    <div id="sound-section">
-        <div class="sec-title" data-i18n="sound">Sound</div>
-        <div id="audio-bar">
-            <div class="audio-row">
-                <button id="muteBtn" class="mute-btn" title="Toggle music">
-                    <span class="btn-icon">&#9835;</span>
-                    <span class="mute-slash"></span>
-                </button>
-                <input type="range" id="sVolume" min="0" max="100" value="10" title="Music volume">
-            </div>
-            <div class="audio-row">
-                <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds">
-                    <span class="btn-icon">&#9679;</span>
-                    <span class="mute-slash"></span>
-                </button>
-                <input type="range" id="sBallSound" min="0" max="100" value="2" title="Ball hit volume">
-            </div>
-        </div>
     </div>
 
     <!-- Actions -->
@@ -500,7 +513,13 @@
     <div>
         <div class="sec-header">
             <div class="sec-title" data-i18n="shape">Shape</div>
-            <button class="rnd-btn" id="rndShape" title="Random shape">&#8635;</button>
+            <div style="display:flex;gap:4px;align-items:center">
+                <button id="dirShape" class="dir-btn-mini" title="Reverse shape rotation">
+                    <span id="dirShapeL" class="dir-badge">L</span>
+                    <span id="dirShapeR" class="dir-badge on">R</span>
+                </button>
+                <button class="rnd-btn" id="rndShape" title="Random shape">&#8635;</button>
+            </div>
         </div>
         <div id="shape-grid"></div>
         <div class="ctrl-pair" style="margin-top:6px">
@@ -517,21 +536,15 @@
 
     <hr class="sep">
 
-    <!-- Direction controls -->
-    <div class="ctrl-pair" style="margin:0">
-        <button id="dirShape" class="dir-btn" title="Reverse shape rotation">
-            <span id="dirShapeLabel" class="dir-label">R</span>Shape
-        </button>
-        <button id="dirCross" class="dir-btn" title="Reverse cross rotation">
-            <span id="dirCrossLabel" class="dir-label">L</span>Cross
-        </button>
-    </div>
-
-    <hr class="sep">
-
     <!-- Cross -->
     <div>
-        <div class="sec-title" data-i18n="cross">Cross</div>
+        <div class="sec-header">
+            <div class="sec-title" data-i18n="cross">Cross</div>
+            <button id="dirCross" class="dir-btn-mini" title="Reverse cross rotation">
+                <span id="dirCrossL" class="dir-badge on">L</span>
+                <span id="dirCrossR" class="dir-badge">R</span>
+            </button>
+        </div>
         <div id="cross-grid"></div>
         <div class="ctrl-pair" style="margin-top:6px">
             <div class="ctrl">
@@ -543,19 +556,22 @@
                 <input type="range" id="sCrossSpeed" min="0" max="20" value="3">
             </div>
         </div>
-        <label class="toggle-row">
+        <!-- Cross Hole toggle with cycle button -->
+        <div class="toggle-row">
             <span data-i18n="crossHole">Cross Hole</span>
-            <span class="toggle-switch">
-                <input type="checkbox" id="crossHoleCheck">
-                <span class="toggle-track"></span>
-                <span class="toggle-thumb"></span>
+            <span style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+                <button id="holeCycleBtn" class="hole-cycle-btn" title="Advance to next arm">&#8635;</button>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="crossHoleCheck">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </label>
             </span>
-        </label>
+        </div>
         <div class="hole-controls">
             <span data-i18n="hole">Hole</span>
             <input type="range" id="sCrossHoleSize" class="hole-ctrl-slider"
-                   min="1" max="2" value="1" step="1" title="Hole size">
-            <button id="holeCycleBtn" class="hole-cycle-btn" title="Advance to next arm">&#8635;</button>
+                   min="2" max="3" value="2" step="1" title="Hole size">
         </div>
         <div class="hole-controls">
             <span data-i18n="cycle">Cycle</span>
@@ -590,10 +606,17 @@
                 <input type="range" id="sBallSpeed" min="1" max="20" value="5">
             </div>
             <div class="ctrl">
-                <label>Random Size <span id="vSizeRandom">0</span></label>
+                <label>Rand Size <span id="vSizeRandom">0</span></label>
                 <input type="range" id="sSizeRandom" min="0" max="10" value="0">
             </div>
         </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Physics -->
+    <div>
+        <div class="sec-title" data-i18n="physics">Physics</div>
         <div class="ctrl-pair">
             <div class="ctrl">
                 <label>Gravity <span id="vGravity">5</span></label>
@@ -656,6 +679,29 @@
 
     <hr class="sep">
 
+    <!-- Sound -->
+    <div id="sound-section">
+        <div class="sec-title" data-i18n="sound">Sound</div>
+        <div id="audio-bar">
+            <div class="audio-row">
+                <button id="muteBtn" class="mute-btn" title="Toggle music">
+                    <span class="btn-icon">&#9835;</span>
+                    <span class="mute-slash"></span>
+                </button>
+                <input type="range" id="sVolume" min="0" max="100" value="10" title="Music volume">
+            </div>
+            <div class="audio-row">
+                <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds">
+                    <span class="btn-icon">&#9679;</span>
+                    <span class="mute-slash"></span>
+                </button>
+                <input type="range" id="sBallSound" min="0" max="100" value="2" title="Ball hit volume">
+            </div>
+        </div>
+    </div>
+
+    <hr class="sep">
+
     <!-- Language -->
     <div>
         <div class="sec-title" data-i18n="language">Language</div>
@@ -687,8 +733,10 @@ let shapeSize = 47;
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
 let cachedAdW = 0;
+function adVisW() { return window.innerWidth > 800 ? 160 : 0; }
 function resizeCanvas() {
-    cachedAdW = 0; // ad-left is a fixed overlay; canvas extends underneath it
+    cachedAdW = 0; // ad-left is a fixed overlay; canvas starts at x=0
+    const adW  = adVisW();
     const cssW = window.innerWidth - PANEL_W;
     const cssH = window.innerHeight;
     c.width  = Math.round(cssW * DPR);
@@ -696,8 +744,10 @@ function resizeCanvas() {
     c.style.width  = cssW + 'px';
     c.style.height = cssH + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    W = cssW; H = cssH; cx = W / 2; cy = H / 2;
-    SHAPE_R = (shapeSize / 100) * 0.90 * Math.min(W, H);
+    W = cssW; H = cssH;
+    cx = adW + (cssW - adW) / 2; // center in unobstructed area (right of ad)
+    cy = H / 2;
+    SHAPE_R = (shapeSize / 100) * 0.90 * Math.min(cssW - adW, H);
 }
 resizeCanvas();
 
@@ -1242,7 +1292,7 @@ let gravity = 0.13, gravityAngle = 0, maxBallSpeed = 15, spin = 0.013;
 let shapeAngle = 0, INNER_R = SHAPE_R * 0.35;
 let innerShapeAngle = 0, innerSpin = 0.008;
 let shapeSpinSign = 1, innerSpinSign = 1;
-let crossHoleEnabled = false, crossHoleTip = null, crossHoleHalf = 1;
+let crossHoleEnabled = false, crossHoleTip = null, crossHoleHalf = 2;
 let crossHoleArmIdx = 0, crossHoleNextChange = 0, crossHoleInterval = 5000;
 let logoArmIdx = 0, logoNextChange = 0;
 
@@ -1430,7 +1480,7 @@ SHAPES.forEach(shape => {
 const DEFAULTS = {
     balls:100, ballSize:_defaultR, gravity:5, ballSpeed:5, shapeSpeed:5, shapeSize:55,
     volume:10, ballSound:2, crossSize:50, crossSpeed:3,
-    animSpeed:5, fogTrail:0, sizeRandomness:0, gravityAngle:0, crossHole:false, crossHoleSize:1, crossHoleTimeout:5,
+    animSpeed:5, fogTrail:0, sizeRandomness:0, gravityAngle:0, crossHole:false, crossHoleSize:2, crossHoleTimeout:5,
     shapeIdx:3, crossIdx:0,
     themeId:'cyber', ballThemeId:'standard', fogThemeId:'standard',
     audioMuted:false, ballSoundMuted:false,
@@ -1461,6 +1511,8 @@ function saveSettings() {
         ballThemeId:   currentBallTheme.id,
         fogThemeId:    currentFogTheme.id,
         audioMuted, ballSoundMuted,
+        shapeDir: shapeSpinSign,
+        crossDir: innerSpinSign,
         crossHole: crossHoleEnabled,
         crossHoleSize: crossHoleHalf,
         crossHoleTimeout: Math.min(crossHoleInterval / 1000, 10),
@@ -1469,6 +1521,9 @@ function saveSettings() {
 
 function applySettings(s) {
     _suppressSave = true;
+    // Restore direction signs before sliders fire (sliders use signs)
+    if (s.shapeDir != null) shapeSpinSign = s.shapeDir;
+    if (s.crossDir != null) innerSpinSign = s.crossDir;
     const set = (id, val) => {
         if (val == null) return;
         const el = document.getElementById(id);
@@ -1515,7 +1570,7 @@ function applySettings(s) {
         if (!crossHoleEnabled) balls.forEach(b => { b.insideCross = false; });
     }
     if (s.crossHoleSize != null) {
-        crossHoleHalf = s.crossHoleSize;
+        crossHoleHalf = Math.max(2, s.crossHoleSize);
         const el = document.getElementById('sCrossHoleSize');
         el.value = crossHoleHalf; trackBg(el);
     }
@@ -1526,6 +1581,9 @@ function applySettings(s) {
         el.value = v; trackBg(el);
         document.getElementById('vCrossHoleTimeout').textContent = v + 's';
     }
+    // Refresh direction indicators after all settings applied
+    updateDirBtn('dirShapeL', 'dirShapeR', shapeSpinSign >= 0);
+    updateDirBtn('dirCrossL', 'dirCrossR', innerSpinSign < 0);
     _suppressSave = false;
 }
 
@@ -1600,7 +1658,7 @@ function setAnimSpeed(v) {
 function updateHoleSizeMax() {
     const iV = innerShapeVerts(innerShapeAngle);
     const n  = iV.length;
-    const maxHalf = Math.max(1, Math.floor((n - 2) / 2));
+    const maxHalf = Math.max(2, Math.floor((n - 2) / 2));
     const el = document.getElementById('sCrossHoleSize');
     el.max = maxHalf;
     if (+el.value > maxHalf) {
@@ -2402,14 +2460,14 @@ FOG_THEMES.forEach(theme => {
 
 // ── i18n ───────────────────────────────────────────────────────
 const STRINGS = {
-    en: { sound:'Sound', shape:'Shape', cross:'Cross', crossHole:'Cross Hole', ballColors:'Ball Colors', background:'Background', theme:'Theme', language:'Language', hole:'Hole', cycle:'Cycle', randomBg:'Random Bg', randomTheme:'Random Theme', animSpeed:'Anim Speed' },
-    de: { sound:'Ton', shape:'Form', cross:'Kreuz', crossHole:'Kreuzloch', ballColors:'Ballfarben', background:'Hintergrund', theme:'Thema', language:'Sprache', hole:'Loch', cycle:'Wechsel', randomBg:'Zuf. Bg', randomTheme:'Zuf. Thema', animSpeed:'Animtempo' },
-    es: { sound:'Sonido', shape:'Forma', cross:'Cruz', crossHole:'Agujero Cruz', ballColors:'Colores Bola', background:'Fondo', theme:'Tema', language:'Idioma', hole:'Agujero', cycle:'Ciclo', randomBg:'Bg Aleatorio', randomTheme:'Tema Aleatorio', animSpeed:'Vel. Anim.' },
-    fr: { sound:'Son', shape:'Forme', cross:'Croix', crossHole:'Trou Croix', ballColors:'Couleurs Balle', background:'Arrière-plan', theme:'Thème', language:'Langue', hole:'Trou', cycle:'Cycle', randomBg:'Bg Aléat.', randomTheme:'Thème Aléat.', animSpeed:'Vit. Anim.' },
-    it: { sound:'Suono', shape:'Forma', cross:'Croce', crossHole:'Buco Croce', ballColors:'Colori Palla', background:'Sfondo', theme:'Tema', language:'Lingua', hole:'Buco', cycle:'Ciclo', randomBg:'Bg Casuale', randomTheme:'Tema Casuale', animSpeed:'Vel. Anim.' },
-    pt: { sound:'Som', shape:'Forma', cross:'Cruz', crossHole:'Buraco Cruz', ballColors:'Cores Bola', background:'Plano de Fundo', theme:'Tema', language:'Idioma', hole:'Buraco', cycle:'Ciclo', randomBg:'Bg Aleatório', randomTheme:'Tema Aleatório', animSpeed:'Vel. Anim.' },
-    ja: { sound:'サウンド', shape:'形', cross:'クロス', crossHole:'穴', ballColors:'ボール色', background:'背景', theme:'テーマ', language:'言語', hole:'穴', cycle:'サイクル', randomBg:'ランダムBg', randomTheme:'ランダムテーマ', animSpeed:'アニメ速度' },
-    zh: { sound:'声音', shape:'形状', cross:'十字', crossHole:'十字孔', ballColors:'球颜色', background:'背景', theme:'主题', language:'语言', hole:'孔', cycle:'循环', randomBg:'随机背景', randomTheme:'随机主题', animSpeed:'动画速度' },
+    en: { sound:'Sound', shape:'Shape', cross:'Cross', crossHole:'Cross Hole', ballColors:'Ball Colors', background:'Background', theme:'Theme', language:'Language', hole:'Hole', cycle:'Cycle', randomBg:'Random Bg', randomTheme:'Random Theme', animSpeed:'Anim Speed', physics:'Physics' },
+    de: { sound:'Ton', shape:'Form', cross:'Kreuz', crossHole:'Kreuzloch', ballColors:'Ballfarben', background:'Hintergrund', theme:'Thema', language:'Sprache', hole:'Loch', cycle:'Wechsel', randomBg:'Zuf. Bg', randomTheme:'Zuf. Thema', animSpeed:'Animtempo', physics:'Physik' },
+    es: { sound:'Sonido', shape:'Forma', cross:'Cruz', crossHole:'Agujero Cruz', ballColors:'Colores Bola', background:'Fondo', theme:'Tema', language:'Idioma', hole:'Agujero', cycle:'Ciclo', randomBg:'Bg Aleatorio', randomTheme:'Tema Aleatorio', animSpeed:'Vel. Anim.', physics:'Física' },
+    fr: { sound:'Son', shape:'Forme', cross:'Croix', crossHole:'Trou Croix', ballColors:'Couleurs Balle', background:'Arrière-plan', theme:'Thème', language:'Langue', hole:'Trou', cycle:'Cycle', randomBg:'Bg Aléat.', randomTheme:'Thème Aléat.', animSpeed:'Vit. Anim.', physics:'Physique' },
+    it: { sound:'Suono', shape:'Forma', cross:'Croce', crossHole:'Buco Croce', ballColors:'Colori Palla', background:'Sfondo', theme:'Tema', language:'Lingua', hole:'Buco', cycle:'Ciclo', randomBg:'Bg Casuale', randomTheme:'Tema Casuale', animSpeed:'Vel. Anim.', physics:'Fisica' },
+    pt: { sound:'Som', shape:'Forma', cross:'Cruz', crossHole:'Buraco Cruz', ballColors:'Cores Bola', background:'Plano de Fundo', theme:'Tema', language:'Idioma', hole:'Buraco', cycle:'Ciclo', randomBg:'Bg Aleatório', randomTheme:'Tema Aleatório', animSpeed:'Vel. Anim.', physics:'Física' },
+    ja: { sound:'サウンド', shape:'形', cross:'クロス', crossHole:'穴', ballColors:'ボール色', background:'背景', theme:'テーマ', language:'言語', hole:'穴', cycle:'サイクル', randomBg:'ランダムBg', randomTheme:'ランダムテーマ', animSpeed:'アニメ速度', physics:'物理' },
+    zh: { sound:'声音', shape:'形状', cross:'十字', crossHole:'十字孔', ballColors:'球颜色', background:'背景', theme:'主题', language:'语言', hole:'孔', cycle:'循环', randomBg:'随机背景', randomTheme:'随机主题', animSpeed:'动画速度', physics:'物理' },
 };
 let currentLang = 'en';
 
@@ -2436,18 +2494,29 @@ document.getElementById('langSelect').addEventListener('change', function() {
     setLang(this.value);
 });
 
-// ── Random buttons ─────────────────────────────────────────────
 // ── Direction buttons ──────────────────────────────────────────
+function updateDirBtn(lId, rId, isRight) {
+    const l = document.getElementById(lId), r = document.getElementById(rId);
+    if (l) l.className = isRight ? 'dir-badge' : 'dir-badge on';
+    if (r) r.className = isRight ? 'dir-badge on' : 'dir-badge';
+}
+
 document.getElementById('dirShape').addEventListener('click', function() {
     shapeSpinSign = -shapeSpinSign;
     spin = -spin;
-    document.getElementById('dirShapeLabel').textContent = shapeSpinSign >= 0 ? 'R' : 'L';
+    updateDirBtn('dirShapeL', 'dirShapeR', shapeSpinSign >= 0);
+    saveSettings();
 });
 document.getElementById('dirCross').addEventListener('click', function() {
     innerSpinSign = -innerSpinSign;
     innerSpin = -innerSpin;
-    document.getElementById('dirCrossLabel').textContent = innerSpinSign < 0 ? 'R' : 'L';
+    updateDirBtn('dirCrossL', 'dirCrossR', innerSpinSign < 0);
+    saveSettings();
 });
+
+// Initial indicator state (shape=CW/R, cross=CCW/L)
+updateDirBtn('dirShapeL', 'dirShapeR', true);
+updateDirBtn('dirCrossL', 'dirCrossR', false);
 
 document.getElementById('rndShape').addEventListener('click', () => {
     const btns = [...shapeGrid.querySelectorAll('.shape-btn')];
