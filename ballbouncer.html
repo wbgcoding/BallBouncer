@@ -9,6 +9,7 @@
     <meta name="description" content="Ball Bouncer: Launch hundreds of balls inside 32 spinning geometric shapes. Tune gravity, rotation, fog trails, sounds and 14 color themes — all in real time. Free, no install required.">
     <meta name="keywords" content="ball bouncer, physics simulation, bouncing balls, geometric shapes, canvas game, interactive animation, particle physics, browser game, gravity simulator, spinning shapes">
     <meta name="author" content="bgcoding">
+    <meta name="version" content="1.6.0">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://ballbouncer.vercel.app/">
 
@@ -17,7 +18,7 @@
     <meta property="og:url"         content="https://ballbouncer.vercel.app/">
     <meta property="og:title"       content="Ball Bouncer — Interactive Physics Playground">
     <meta property="og:description" content="Launch hundreds of balls inside 32 spinning shapes. Tune gravity, themes and sounds in real time. Free browser game — no install.">
-    <meta property="og:image"       content="https://ballbouncer.vercel.app/docs/screenshot-balls.png">
+    <meta property="og:image"       content="https://ballbouncer.vercel.app/docs/screenshot-balls.jpg">
     <meta property="og:image:width"  content="1280">
     <meta property="og:image:height" content="720">
     <meta property="og:site_name"   content="Ball Bouncer">
@@ -27,7 +28,7 @@
     <meta name="twitter:card"        content="summary_large_image">
     <meta name="twitter:title"       content="Ball Bouncer — Interactive Physics Playground">
     <meta name="twitter:description" content="Launch hundreds of balls inside 32 spinning geometric shapes. Tune gravity, themes and sounds in real time.">
-    <meta name="twitter:image"       content="https://ballbouncer.vercel.app/docs/screenshot-balls.png">
+    <meta name="twitter:image"       content="https://ballbouncer.vercel.app/docs/screenshot-balls.jpg">
 
     <!-- JSON-LD structured data -->
     <script type="application/ld+json">
@@ -237,29 +238,25 @@
         /* ── Language dropdown ──────────────────────── */
         .lang-dropdown { position:relative; }
         .lang-trigger {
-            width:100%; height:26px; padding:0 8px;
+            height:28px; padding:0 9px;
             background:#0b1222; border:1.5px solid #162030;
             border-radius:6px; cursor:pointer;
-            display:flex; align-items:center; gap:6px;
+            display:flex; align-items:center; gap:5px;
             font-size:10px; font-weight:700; letter-spacing:.06em; color:#4a7090;
             transition:border-color .15s, color .15s, background .15s;
         }
         .lang-trigger:hover  { border-color:#006688; color:var(--accent); background:#0d1830; }
         .lang-trigger.open   { border-color:var(--accent); color:var(--accent); background:#0d1830; }
-        .lang-trigger .lang-flag { font-size:14px; line-height:1; }
-        .lang-trigger .lang-arrow {
-            margin-left:auto; font-size:9px; opacity:.55;
-            transition:transform .15s;
-        }
-        .lang-trigger.open .lang-arrow { transform:rotate(180deg); }
+        .lang-trigger .lang-flag { height:11px; border-radius:2px; display:block; }
+        .lang-option  .lang-flag { height:10px; border-radius:1px; display:block; }
 
         .lang-menu {
-            display:none; position:absolute;
-            bottom:calc(100% + 4px); left:0; right:0;
+            display:none; position:fixed;
+            min-width:164px;
             background:#0b1222; border:1.5px solid #1e3550;
             border-radius:6px; overflow:hidden;
-            box-shadow:0 -4px 20px rgba(0,0,0,.65), 0 0 0 1px rgba(0,212,255,.06);
-            z-index:200; padding:3px;
+            box-shadow:0 8px 24px rgba(0,0,0,.65), 0 0 0 1px rgba(0,212,255,.06);
+            z-index:9999; padding:3px;
             grid-template-columns:repeat(4,1fr); gap:2px;
         }
         .lang-menu.open { display:grid; }
@@ -273,7 +270,6 @@
         }
         .lang-option:hover  { border-color:#006688; color:var(--accent); background:#0d1830; }
         .lang-option.active { border-color:var(--accent); color:var(--accent); background:rgba(0,180,255,.12); }
-        .lang-option .lang-flag { font-size:13px; line-height:1; }
         .toggle-switch {
             position:relative; width:36px; height:20px; flex-shrink:0;
         }
@@ -324,25 +320,55 @@
         #audio-bar { display:flex; flex-direction:column; gap:5px; }
         .audio-row { display:flex; align-items:center; gap:7px; }
         .mute-btn {
-            flex-shrink:0; position:relative; overflow:hidden;
-            background:#0b1222; border:1.5px solid #162030;
+            flex-shrink:0; position:relative; overflow:visible;
+            background:transparent; border:none;
             border-radius:6px; cursor:pointer; line-height:1;
-            width:28px; height:24px;
+            width:28px; height:28px;
             display:flex; align-items:center; justify-content:center;
-            transition:border-color .15s, background .15s;
+            transition:background .15s;
         }
-        .mute-btn:hover { border-color:#006688; background:#0d1830; }
-        .mute-btn.muted { border-color:#3a1010; }
-        .mute-btn.muted .btn-icon { opacity:.35; }
-        .mute-btn .mute-slash { display:none; position:absolute; inset:0; pointer-events:none; }
+        .mute-btn:hover { background:rgba(0,150,200,.10); border-radius:6px; }
+        .mute-btn.muted .btn-icon { opacity:.30; }
+        .mute-btn .mute-slash { display:none; position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:6px; }
         .mute-btn .mute-slash::before {
             content:''; position:absolute; width:2px; height:calc(100% + 8px);
             background:#cc1111; border-radius:1px; top:-4px; left:50%;
             transform:translateX(-50%) rotate(-40deg);
         }
         .mute-btn.muted .mute-slash { display:block; }
-        #muteBtn     .btn-icon { color:#aaddee; font-size:15px; }
-        #ballMuteBtn .btn-icon { color:#5588aa; font-size:17px; }
+        #muteBtn .btn-icon {
+            font-size:20px;
+            background:linear-gradient(270deg,
+                hsl(0,90%,58%), hsl(60,90%,58%), hsl(120,90%,58%),
+                hsl(180,90%,58%), hsl(240,90%,60%), hsl(300,90%,58%), hsl(360,90%,58%));
+            background-size:300% 100%;
+            -webkit-background-clip:text; background-clip:text;
+            -webkit-text-fill-color:transparent; color:transparent;
+            animation:ballRainbowRTL var(--ball-rtl-dur) linear infinite;
+            filter:drop-shadow(0 0 6px rgba(160,100,255,.8));
+        }
+        #ballMuteBtn .btn-icon { display:flex; align-items:center; justify-content:center; }
+        .sound-ball {
+            width:22px; height:22px; border-radius:50%;
+            position:relative; overflow:hidden; flex-shrink:0;
+            box-shadow:1px 3px 8px rgba(0,0,0,.8), 0 0 0 0.5px rgba(255,255,255,.08);
+        }
+        .sound-ball::before {
+            content:''; position:absolute; inset:0;
+            background:linear-gradient(270deg,
+                hsl(0,90%,58%), hsl(60,90%,58%), hsl(120,90%,58%),
+                hsl(180,90%,58%), hsl(240,90%,60%), hsl(300,90%,58%), hsl(360,90%,58%));
+            background-size:300% 100%;
+            animation:ballRainbowRTL var(--ball-rtl-dur) linear infinite;
+        }
+        .sound-ball::after {
+            content:''; position:absolute; inset:0;
+            background:radial-gradient(circle at 33% 28%,
+                rgba(255,255,255,.88) 0%,
+                rgba(255,255,255,.10) 38%,
+                rgba(0,0,0,0) 54%,
+                rgba(0,0,0,.42) 100%);
+        }
 
         /* ── Dir mini-button (shows both L and R) ──────── */
         .dir-btn-mini {
@@ -430,7 +456,7 @@
             border:1.5px solid rgba(160,100,255,.25);
             border-radius:6px; color:rgba(190,140,255,.8);
             font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
-            padding:7px 10px; cursor:pointer;
+            padding:7px 10px; cursor:pointer; line-height:1.35; text-align:center; white-space:normal;
             display:flex; align-items:center; justify-content:center; gap:5px;
             transition:border-color .15s, color .15s, background .15s, box-shadow .15s;
         }
@@ -570,6 +596,13 @@
         /* ── Paired sliders ─────────────────────────────── */
         .ctrl-pair { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
+        /* ── Small ctrl variant ─────────────────────────── */
+        .ctrl-sm label { font-size:7px; margin-bottom:2px; }
+        .ctrl-sm label span { font-size:10px; }
+        .ctrl-sm input[type=range] { height:2px; }
+        .ctrl-sm input[type=range]::-webkit-slider-thumb { width:9px; height:9px; }
+        .ctrl-sm input[type=range]::-moz-range-thumb { width:9px; height:9px; }
+
         /* ── Swatch grids ───────────────────────────────── */
         #theme-grid, #ball-theme-grid, #fog-theme-grid {
             display:flex; flex-wrap:wrap; gap:5px;
@@ -588,27 +621,35 @@
 
         /* ── Cycle interval preset buttons ───────────────── */
         #cycle-interval-row {
-            display:none; gap:4px; margin-top:3px;
+            display:none; gap:4px; margin-top:3px; align-items:center; justify-content:flex-end;
         }
         .cycle-preset {
-            flex:1; height:20px;
-            background:#0b1222; border:1.5px solid #162030;
-            border-radius:4px; color:#2e5070;
-            font-size:9px; font-weight:800; letter-spacing:.1em;
+            width:36px; height:36px; flex-shrink:0;
+            background:rgba(160,100,255,.07); border:1.5px solid rgba(160,100,255,.18);
+            border-radius:6px; color:rgba(210,160,255,.6);
+            font-size:17px; font-weight:900;
             cursor:pointer; transition:border-color .15s, color .15s, background .15s;
         }
-        .cycle-preset:hover { border-color:#006688; color:var(--accent); background:#0d1830; }
-        .cycle-preset.active { border-color:var(--accent); color:var(--accent); background:rgba(0,180,255,.14); }
+        .cycle-preset:hover { border-color:rgba(160,100,255,.4); color:rgba(210,160,255,.9); background:rgba(160,100,255,.14); }
+        .cycle-preset.active { border-color:rgba(160,100,255,.65); color:rgba(210,160,255,.95); background:rgba(160,100,255,.22); }
 
-        /* ── Everything-random progress bar ──────────────── */
-        #rnd-progress-wrap {
-            display:none; height:3px; margin-top:3px;
-            background:rgba(160,100,255,.12); border-radius:2px; overflow:hidden;
+        /* ── Countdown timer progress bar ────────────────── */
+        #rnd-timer-wrap {
+            flex:1; height:36px; position:relative; min-width:0;
+            background:rgba(160,100,255,.07); border-radius:6px;
+            border:1.5px solid rgba(160,100,255,.18);
+            overflow:hidden; display:flex; align-items:center;
         }
-        #rnd-progress-bar {
-            height:100%; border-radius:2px;
-            background:linear-gradient(to left,rgba(180,80,255,.85),rgba(80,180,255,.85));
-            transform-origin:right;
+        #rnd-timer {
+            position:relative; z-index:1; padding:0 10px;
+            font-size:17px; font-weight:900;
+            color:rgba(210,160,255,.95); font-variant-numeric:tabular-nums;
+            text-shadow:0 0 8px rgba(180,80,255,.5);
+        }
+        #rnd-timer-fill {
+            position:absolute; left:0; top:0; bottom:0; right:0;
+            background:linear-gradient(to right,rgba(180,80,255,.32),rgba(80,180,255,.16));
+            transform-origin:left;
         }
         @keyframes progressShrink {
             from { transform:scaleX(1); }
@@ -670,6 +711,22 @@
                 <rect x="7" y="0.5" width="3.5" height="12" rx="1.5"/>
             </svg>
         </button>
+        <div class="lang-dropdown" id="lang-dropdown">
+            <button class="lang-trigger" id="langTrigger">
+                <img class="lang-flag" id="langFlag" src="https://flagcdn.com/w20/gb.png" alt="EN">
+                <span id="langCode">EN</span>
+            </button>
+            <div class="lang-menu" id="langMenu">
+                <button class="lang-option" data-lang="en"><img class="lang-flag" src="https://flagcdn.com/w20/gb.png" alt="EN">EN</button>
+                <button class="lang-option" data-lang="de"><img class="lang-flag" src="https://flagcdn.com/w20/de.png" alt="DE">DE</button>
+                <button class="lang-option" data-lang="es"><img class="lang-flag" src="https://flagcdn.com/w20/es.png" alt="ES">ES</button>
+                <button class="lang-option" data-lang="fr"><img class="lang-flag" src="https://flagcdn.com/w20/fr.png" alt="FR">FR</button>
+                <button class="lang-option" data-lang="it"><img class="lang-flag" src="https://flagcdn.com/w20/it.png" alt="IT">IT</button>
+                <button class="lang-option" data-lang="pt"><img class="lang-flag" src="https://flagcdn.com/w20/pt.png" alt="PT">PT</button>
+                <button class="lang-option" data-lang="ja"><img class="lang-flag" src="https://flagcdn.com/w20/jp.png" alt="JA">JA</button>
+                <button class="lang-option" data-lang="zh"><img class="lang-flag" src="https://flagcdn.com/w20/cn.png" alt="ZH">ZH</button>
+            </div>
+        </div>
         <button id="resetBtn">&#10227; Reset</button>
     </div>
     <!-- Sound -->
@@ -685,21 +742,11 @@
             </div>
             <div class="audio-row">
                 <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds">
-                    <span class="btn-icon">&#9679;</span>
+                    <span class="btn-icon"><span class="sound-ball"></span></span>
                     <span class="mute-slash"></span>
                 </button>
                 <input type="range" id="sBallSound" min="0" max="100" value="2" title="Ball hit volume">
             </div>
-        </div>
-        <div class="ctrl" style="margin-top:4px">
-            <label>
-                <span style="display:flex;align-items:center;gap:3px">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style="opacity:.65;flex-shrink:0"><path d="M0 .5L4.2 5 0 9.5z"/><path d="M5 .5L9.2 5 5 9.5z"/></svg>
-                    Speed
-                </span>
-                <span id="vGameSpeed">1×</span>
-            </label>
-            <input type="range" id="sGameSpeed" min="1" max="10" value="1">
         </div>
     </div>
 
@@ -707,14 +754,27 @@
 
     <div id="rnd-all-row">
         <button id="rndAllBtn" title="Randomize everything">
-            <span id="rndAllBtnText">Everything Random</span>
+            <span id="rndAllBtnText">Everything<br>Random</span>
         </button>
         <button id="cycleAllBtn" title="Auto-randomize everything every 5 s">&#8634;</button>
     </div>
-    <div id="rnd-progress-wrap"><div id="rnd-progress-bar"></div></div>
     <div id="cycle-interval-row">
-        <button id="cycleInterval5" class="cycle-preset active">5s</button>
-        <button id="cycleInterval10" class="cycle-preset">10s</button>
+        <div id="rnd-timer-wrap">
+            <span id="rnd-timer">5</span>
+            <div id="rnd-timer-fill"></div>
+        </div>
+        <button id="cycleInterval5" class="cycle-preset active">5</button>
+        <button id="cycleInterval10" class="cycle-preset">10</button>
+    </div>
+    <div class="ctrl" style="margin-top:6px">
+        <label>
+            <span style="display:flex;align-items:center;gap:3px">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style="opacity:.65;flex-shrink:0"><path d="M0 .5L4.2 5 0 9.5z"/><path d="M5 .5L9.2 5 5 9.5z"/></svg>
+                Speed
+            </span>
+            <span id="vGameSpeed">1×</span>
+        </label>
+        <input type="range" id="sGameSpeed" min="1" max="10" value="1">
     </div>
 
     <hr class="sep">
@@ -764,7 +824,7 @@
         <div class="ctrl-pair" style="margin-top:6px">
             <div class="ctrl">
                 <label>Size <span id="vCrossSize">50</span></label>
-                <input type="range" id="sCrossSize" min="1" max="100" value="50">
+                <input type="range" id="sCrossSize" min="1" max="150" value="50">
             </div>
             <div class="ctrl">
                 <label>Speed <span id="vCrossSpeed">1</span></label>
@@ -808,11 +868,11 @@
         <div class="ctrl-pair" style="margin-top:6px">
             <div class="ctrl">
                 <label>Balls <span id="vBalls">100</span></label>
-                <input type="range" id="sBalls" min="1" max="1000" value="100">
+                <input type="range" id="sBalls" min="0" max="200" value="100">
             </div>
             <div class="ctrl">
                 <label>Size <span id="vBallSize">8</span></label>
-                <input type="range" id="sBallSize" min="3" max="18" value="8">
+                <input type="range" id="sBallSize" min="1" max="10" value="5">
             </div>
         </div>
         <div class="ctrl-pair">
@@ -835,7 +895,7 @@
         <div class="ctrl-pair">
             <div class="ctrl">
                 <label>Gravity <span id="vGravity">5</span></label>
-                <input type="range" id="sGravity" min="0" max="10" value="5">
+                <input type="range" id="sGravity" min="0" max="10" value="3">
             </div>
             <div class="ctrl">
                 <label>Fog <span id="vFogTrail">0</span></label>
@@ -857,7 +917,7 @@
             <button class="rnd-btn" id="rndFogTheme" title="Random background style">&#8635;</button>
         </div>
         <div id="fog-theme-grid"></div>
-        <div class="ctrl" style="margin-top:6px">
+        <div class="ctrl ctrl-sm" style="margin-top:4px">
             <label><span data-i18n="animSpeed">Anim Speed</span> <span id="vAnimSpeed">50</span>%</label>
             <input type="range" id="sAnimSpeed" min="1" max="100" value="50">
         </div>
@@ -892,29 +952,6 @@
         <div id="theme-grid"></div>
     </div>
 
-    <hr class="sep">
-
-    <!-- Language -->
-    <div>
-        <div class="sec-title" data-i18n="language">Language</div>
-        <div class="lang-dropdown" id="lang-dropdown">
-            <button class="lang-trigger" id="langTrigger">
-                <span class="lang-flag" id="langFlag">🇬🇧</span>
-                <span id="langCode">EN</span>
-                <span class="lang-arrow">▾</span>
-            </button>
-            <div class="lang-menu" id="langMenu">
-                <button class="lang-option" data-lang="en"><span class="lang-flag">🇬🇧</span>EN</button>
-                <button class="lang-option" data-lang="de"><span class="lang-flag">🇩🇪</span>DE</button>
-                <button class="lang-option" data-lang="es"><span class="lang-flag">🇪🇸</span>ES</button>
-                <button class="lang-option" data-lang="fr"><span class="lang-flag">🇫🇷</span>FR</button>
-                <button class="lang-option" data-lang="it"><span class="lang-flag">🇮🇹</span>IT</button>
-                <button class="lang-option" data-lang="pt"><span class="lang-flag">🇵🇹</span>PT</button>
-                <button class="lang-option" data-lang="ja"><span class="lang-flag">🇯🇵</span>JA</button>
-                <button class="lang-option" data-lang="zh"><span class="lang-flag">🇨🇳</span>ZH</button>
-            </div>
-        </div>
-    </div>
 
 </div>
 <script>
@@ -950,9 +987,9 @@ function resizeCanvas() {
 }
 resizeCanvas();
 
-const _defaultR = Math.round(Math.max(3, Math.min(18, SHAPE_R * 0.018)));
+const _defaultR = 5;
 document.getElementById('sBallSize').value = _defaultR;
-let BALL_R = _defaultR;
+let BALL_R = _defaultR * 1.2;
 let sizeRandomness = 0;
 
 // ── Color themes ──────────────────────────────────────────────
@@ -1665,12 +1702,13 @@ SHAPES.forEach(shape => {
 
 // ── Settings ───────────────────────────────────────────────────
 const DEFAULTS = {
-    balls:100, ballSize:_defaultR, gravity:5, ballSpeed:5, shapeSpeed:2, shapeSize:50,
+    balls:100, ballSize:_defaultR, gravity:3, ballSpeed:5, shapeSpeed:2, shapeSize:50,
     volume:10, ballSound:2, crossSize:50, crossSpeed:1,
     animSpeed:50, fogTrail:0, sizeRandomness:0, gravityAngle:0, gameSpeed:1, crossHole:false, crossHoleSize:1, crossHoleTimeout:5,
     shapeIdx:3, crossIdx:0,
     themeId:'cyber', ballThemeId:'standard', fogThemeId:'standard',
     audioMuted:false, ballSoundMuted:false,
+    rndThemes:false, rndBg:false,
 };
 
 let _suppressSave = false;
@@ -1770,6 +1808,14 @@ function applySettings(s) {
         el.value = v; trackBg(el);
         document.getElementById('vCrossHoleTimeout').textContent = v + 's';
     }
+    if (s.rndThemes != null) {
+        const el = document.getElementById('rndThemesCheck');
+        if (el.checked !== !!s.rndThemes) { el.checked = !!s.rndThemes; el.dispatchEvent(new Event('change')); }
+    }
+    if (s.rndBg != null) {
+        const el = document.getElementById('rndBgCheck');
+        if (el.checked !== !!s.rndBg) { el.checked = !!s.rndBg; el.dispatchEvent(new Event('change')); }
+    }
     // Refresh direction indicators after all settings applied
     updateDirBtn('dirShapeL', 'dirShapeR', shapeSpinSign >= 0);
     updateDirBtn('dirCrossL', 'dirCrossR', innerSpinSign < 0);
@@ -1798,7 +1844,7 @@ function slider(id, valId, fn) {
 }
 
 slider('sBalls',      'vBalls',      v => { while (balls.length < v) balls.push(makeBall()); balls.length = v; });
-slider('sBallSize',   'vBallSize',   v => { BALL_R = v; balls.forEach(b => { b.r = clampedR(); b.sprite = makeBallSprite(b.h, b.s, b.l, b.r); }); });
+slider('sBallSize',   'vBallSize',   v => { BALL_R = v * 1.2; balls.forEach(b => { b.r = clampedR(); b.sprite = makeBallSprite(b.h, b.s, b.l, b.r); }); });
 slider('sSizeRandom', 'vSizeRandom', v => { sizeRandomness = v; balls.forEach(b => { b.r = clampedR(); b.sprite = makeBallSprite(b.h, b.s, b.l, b.r); }); });
 {
     const el = document.getElementById('sAnimSpeed');
@@ -1818,7 +1864,6 @@ slider('sShapeSpeed', 'vShapeSpeed', v => { spin = v * 0.0026 * shapeSpinSign; }
 slider('sShapeSize',  'vShapeSize',  v => {
     shapeSize = v;
     SHAPE_R = (v / 100) * 0.90 * Math.min(W, H);
-    INNER_R = SHAPE_R * 0.65 * (+document.getElementById('sCrossSize').value / 100);
     rebuildBgCanvas();
     balls.forEach(respawnBall);
 });
@@ -2016,17 +2061,23 @@ pauseBtn.addEventListener('click', () => {
     pauseBtn.title     = paused ? 'Resume simulation' : 'Pause simulation';
     pauseBtn.classList.toggle('paused', paused);
 
-    const bar = document.getElementById('rnd-progress-bar');
+    const fill = document.getElementById('rnd-timer-fill');
     if (paused) {
-        if (bar) bar.style.animationPlayState = 'paused';
+        if (fill) fill.style.animationPlayState = 'paused';
+        _rndCycleRemaining = Math.max(0, _rndCycleEnd - Date.now());
+        stopRndTimer();
         clearTimeout(allCycleTimer);   allCycleTimer   = null;
         clearTimeout(shapeCycleTimer); shapeCycleTimer = null;
         clearTimeout(crossCycleTimer); crossCycleTimer = null;
         clearTimeout(_cycleTimer);     _cycleTimer     = null;
         clearTimeout(_bgCycleTimer);   _bgCycleTimer   = null;
     } else {
-        if (bar) bar.style.animationPlayState = 'running';
-        if (allCycleActive)   scheduleAllCycle();
+        if (fill) fill.style.animationPlayState = 'running';
+        if (allCycleActive) {
+            _rndCycleEnd = Date.now() + _rndCycleRemaining;
+            startRndTimer();
+            scheduleAllCycle();
+        }
         if (shapeCycleActive) scheduleShapeCycle();
         if (crossCycleActive) scheduleCrossCycle();
         if (_cycleActive)     scheduleNextCycle();
@@ -2081,6 +2132,7 @@ function innerShapeVerts(angle) {
     }
     return verts;
 }
+
 
 function insidePoly(px, py, verts) {
     let inside = false;
@@ -2316,7 +2368,7 @@ function update() {
             ball.angle += ball.omega / SUBSTEPS;
             ball.omega *= 0.9985;
             if (ball.escaped) continue;
-            wallCollide(ball, verts,  spin);
+            wallCollide(ball, verts, spin);
             if (crossHoleEnabled) {
                 crossWallCollide(ball, iVerts, -innerSpin);
             } else {
@@ -2446,7 +2498,7 @@ function draw() {
         ctx.drawImage(bgCanvas, 0, 0);
     }
 
-    // Outer shape fill + border
+    // Outer shape fill + border (stroke only on arm-facing edges)
     ctx.beginPath();
     verts.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
     ctx.closePath();
@@ -2455,6 +2507,9 @@ function draw() {
     ctx.save();
     ctx.shadowBlur = 36; ctx.shadowColor = currentTheme.shapeShadow;
     ctx.strokeStyle = currentTheme.shapeStroke; ctx.lineWidth = 3;
+    ctx.beginPath();
+    verts.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
+    ctx.closePath();
     ctx.stroke();
     ctx.restore();
 
@@ -2746,7 +2801,7 @@ const STRINGS = {
     zh: { sound:'声音', shape:'形状', cross:'十字', crossHole:'十字孔', ballColors:'球颜色', background:'背景', theme:'主题', language:'语言', hole:'孔', cycle:'循环', randomBg:'随机背景', randomTheme:'随机主题', animSpeed:'动画速度', physics:'物理', adLabel:'广告' },
 };
 let currentLang = 'en';
-const LANG_FLAGS = { en:'🇬🇧', de:'🇩🇪', es:'🇪🇸', fr:'🇫🇷', it:'🇮🇹', pt:'🇵🇹', ja:'🇯🇵', zh:'🇨🇳' };
+const LANG_FLAGS = { en:'gb', de:'de', es:'es', fr:'fr', it:'it', pt:'pt', ja:'jp', zh:'cn' };
 
 function setLang(code) {
     if (!STRINGS[code]) return;
@@ -2759,7 +2814,9 @@ function setLang(code) {
     document.querySelectorAll('.lang-option').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.lang === code)
     );
-    document.getElementById('langFlag').textContent = LANG_FLAGS[code] || '';
+    const flagEl = document.getElementById('langFlag');
+    flagEl.src = `https://flagcdn.com/w20/${LANG_FLAGS[code] || 'gb'}.png`;
+    flagEl.alt = code.toUpperCase();
     document.getElementById('langCode').textContent = code.toUpperCase();
     localStorage.setItem('bb_lang', code);
 }
@@ -2779,6 +2836,11 @@ function setLang(code) {
         e.stopPropagation();
         const open = langMenu.classList.toggle('open');
         langTrigger.classList.toggle('open', open);
+        if (open) {
+            const r = langTrigger.getBoundingClientRect();
+            langMenu.style.top  = (r.bottom + 4) + 'px';
+            langMenu.style.left = r.left + 'px';
+        }
     });
 
     document.querySelectorAll('.lang-option').forEach(btn =>
@@ -2908,7 +2970,7 @@ document.getElementById('rndAllBtn').addEventListener('click', () => {
     rnd('sCrossSpeed',   1,   15);
     rnd('sCrossSize',   20,   80);
     rnd('sBalls',       20,  300);
-    rnd('sBallSize',     3,   14);
+    rnd('sBallSize',     3,   10);
     rnd('sBallSpeed',    2,   15);
     rnd('sFogTrail',     0,   20);
 
@@ -2928,13 +2990,32 @@ document.getElementById('rndAllBtn').addEventListener('click', () => {
 
 // ── Everything Cycle ───────────────────────────────────────────
 let allCycleActive = false, allCycleTimer = null, allCycleInterval = 5000;
+let _rndCycleEnd = 0, _rndTimerInterval = null, _rndCycleRemaining = 0;
+
+function startRndTimer() {
+    stopRndTimer();
+    function tick() {
+        const el = document.getElementById('rnd-timer');
+        if (!el) return;
+        const secs = Math.ceil(Math.max(0, _rndCycleEnd - Date.now()) / 1000);
+        el.textContent = secs;
+    }
+    tick();
+    _rndTimerInterval = setInterval(tick, 250);
+}
+
+function stopRndTimer() {
+    if (_rndTimerInterval) { clearInterval(_rndTimerInterval); _rndTimerInterval = null; }
+}
 
 function restartProgressBar() {
-    const bar = document.getElementById('rnd-progress-bar');
-    if (!bar) return;
-    bar.style.animation = 'none';
-    void bar.offsetWidth;
-    bar.style.animation = `progressShrink ${allCycleInterval / 1000}s linear forwards`;
+    const fill = document.getElementById('rnd-timer-fill');
+    if (!fill) return;
+    fill.style.animation = 'none';
+    void fill.offsetWidth;
+    fill.style.animation = `progressShrink ${allCycleInterval / 1000}s linear forwards`;
+    _rndCycleEnd = Date.now() + allCycleInterval;
+    startRndTimer();
 }
 
 function scheduleAllCycle() {
@@ -2951,14 +3032,15 @@ document.getElementById('cycleAllBtn').addEventListener('click', function() {
     allCycleActive = !allCycleActive;
     this.classList.toggle('party-active', allCycleActive);
     document.getElementById('rndAllBtn').classList.toggle('party-active', allCycleActive);
+    document.getElementById('rnd-timer-wrap').classList.toggle('party-active', allCycleActive);
+    document.getElementById('cycleInterval5').classList.toggle('party-active', allCycleActive);
+    document.getElementById('cycleInterval10').classList.toggle('party-active', allCycleActive);
 
-    const textEl = document.getElementById('rndAllBtnText');
-    const progressWrap = document.getElementById('rnd-progress-wrap');
-    const intervalRow  = document.getElementById('cycle-interval-row');
+    const textEl     = document.getElementById('rndAllBtnText');
+    const intervalRow = document.getElementById('cycle-interval-row');
 
-    textEl.textContent = allCycleActive ? 'EVERYTHING IS CRAZY RANDOM' : 'Everything Random';
-    progressWrap.style.display = allCycleActive ? 'block' : 'none';
-    intervalRow.style.display  = allCycleActive ? 'flex'  : 'none';
+    textEl.innerHTML = allCycleActive ? 'EVERYTHING IS<br>CRAZY RANDOM' : 'Everything<br>Random';
+    intervalRow.style.display = allCycleActive ? 'flex' : 'none';
 
     clearTimeout(allCycleTimer);
     allCycleTimer = null;
@@ -2973,6 +3055,11 @@ document.getElementById('cycleAllBtn').addEventListener('click', function() {
         restartProgressBar();
         scheduleAllCycle();
     } else {
+        stopRndTimer();
+        const timerEl = document.getElementById('rnd-timer');
+        if (timerEl) timerEl.textContent = '';
+        const fillEl = document.getElementById('rnd-timer-fill');
+        if (fillEl) fillEl.style.animation = 'none';
         // Disable Random Theme + Random Bg
         const rTh = document.getElementById('rndThemesCheck');
         const rBg = document.getElementById('rndBgCheck');
@@ -3001,6 +3088,9 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     localStorage.removeItem('bb');
     shapeAngle = 0; innerShapeAngle = 0;
     balls.forEach(respawnBall);
+    _suppressSave = true;
+    setTheme(THEMES[Math.floor(Math.random() * 7)]);
+    _suppressSave = false;
 });
 
 // ── Resize handler ─────────────────────────────────────────────
@@ -3010,9 +3100,9 @@ window.addEventListener('resize', () => {
     resizeCanvas();
     if (prevShapeR > 0 && SHAPE_R !== prevShapeR) {
         const scale = SHAPE_R / prevShapeR;
-        BALL_R = Math.max(3, Math.min(18, BALL_R * scale));
+        BALL_R = Math.max(1 * 1.2, Math.min(10 * 1.2, BALL_R * scale));
         const sEl = document.getElementById('sBallSize');
-        sEl.value = Math.round(BALL_R);
+        sEl.value = Math.round(BALL_R / 1.2);
         trackBg(sEl);
         document.getElementById('vBallSize').textContent = sEl.value;
         balls.forEach(ball => {
@@ -3086,9 +3176,9 @@ window.addEventListener('resize', () => {
 loadSettings();
 updateHoleSizeMax();
 updateHoleControlsVisibility(crossHoleEnabled);
-// Randomize all themes on every startup
+// Randomize themes on every startup — UI theme from row 1 only
 _suppressSave = true;
-setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
+setTheme(THEMES[Math.floor(Math.random() * 7)]);
 setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
 setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
 _suppressSave = false;

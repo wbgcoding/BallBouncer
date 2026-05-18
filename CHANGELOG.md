@@ -4,10 +4,25 @@ All notable changes to Ball Bouncer are documented here.
 
 ---
 
+## [1.6.0] - 2026-05-18
+
+### New Features
+- **Party effect on cycle buttons** — the "5s" and "10s" interval buttons and the timer bar now pulse with the same rainbow party animation as the "Everything Random" button when the cycle is active
+- **Ball count expanded** — ball count range extended from 0–100 to 0–200 for denser simulations
+- **Cross size extended** — inner cross maximum size increased by 50% for more extreme shapes
+
+### Improvements
+- **Sound icon overhaul** — music note icon now has a vivid rainbow gradient (matching the logo ball) with no outer border ring; ball-sound button replaced with an animated 3D rainbow sphere matching the top-bar ball icon exactly
+- **Ball size range refined** — minimum ball size lowered to 1, default set to 5; physical radius is scaled up 20% beyond the slider value for a more satisfying feel at all sizes
+- **Random Theme / Random Bg default off** — both auto-cycle toggles now start disabled so the initial look is stable; startup and Reset still randomize from the softer row-1 UI themes
+- **Gravity default lowered to 3** — gentler starting gravity makes the initial experience more floaty
+- **Animation Speed control compact** — the AnimSpeed slider row is visually smaller to reduce panel clutter
+
+---
+
 ## [1.5.0] - 2026-05-17
 
 ### New Features
-- **Language-aware ad label** — top-left label reads "AD" (EN), "Werbung" (DE), "Anuncio" (ES), "Pub" (FR), etc.; auto-updates on language change
 - **Everything Cycle progress bar** — reverse countdown bar under the "Everything Random" button shows time remaining until next randomization
 - **5 s / 10 s interval presets** — two small buttons below the cycle button let you switch the auto-randomize interval; selected preset is highlighted
 - **"EVERYTHING IS CRAZY RANDOM" mode** — button text changes while the cycle is active to make it unmistakably clear
@@ -31,7 +46,6 @@ All notable changes to Ball Bouncer are documented here.
 
 ### Improvements
 - Canvas extends under the ad overlay for more game area; simulation center uses full screen width
-- Ad column breakpoint lowered to 800px for better mid-size screen coverage
 
 ---
 

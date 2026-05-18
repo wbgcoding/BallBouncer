@@ -1,14 +1,12 @@
 {
   "rewrites": [
     { "source": "/", "destination": "/ballbouncer.html" },
-    { "source": "/(.*)", "destination": "/ballbouncer.html" }
+    { "source": "/((?!docs/).*)", "destination": "/ballbouncer.html" }
   ],
   "headers": [
     {
-      "source": "/ballbouncer.html",
+      "source": "/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
@@ -17,9 +15,17 @@
       ]
     },
     {
+      "source": "/ballbouncer.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "Content-Type", "value": "text/html; charset=utf-8" }
+      ]
+    },
+    {
       "source": "/",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "Content-Type", "value": "text/html; charset=utf-8" }
       ]
     },
     {
