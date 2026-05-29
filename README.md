@@ -6,11 +6,12 @@
 
 ---
 
-## Screenshots
+## 📸 Visual Tour
 
-| High-Speed Action | Mobile UI | Complex Geometry |
-|--------|-----------|--------|
+| **Pure Performance** | **Modern Mobile UI** | **Dynamic Geometry** |
+|:---:|:---:|:---:|
 | ![Action](docs/screenshot-balls.jpg) | ![UI](docs/screenshot-themes.jpg) | ![Shapes](docs/screenshot-hole.jpg) |
+| *Witness rock-solid 60 FPS even with hundreds of active entities.* | *A completely revamped, touch-optimized settings overlay.* | *Intelligent boundary logic keeps every element perfectly contained.* |
 
 ---
 
