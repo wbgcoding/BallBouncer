@@ -1,6 +1,25 @@
 # Changelog
 
-All notable changes to Ball Bouncer are documented here.
+All notable changes to BallBouncer are documented here.
+
+---
+
+## [1.7.0] - 2026-05-29
+
+### Performance & Core
+- **Engine Overhaul** — Switched to high-performance for-loops and vertex object pooling across the entire physics and render pipeline. Frame rates are now rock-solid at 60 FPS, even on mobile.
+- **Shadow-free Rendering** — Replaced expensive canvas shadows with optimized HSL layers and opacity gradients. The aesthetic remains identical, but the CPU/GPU load is drastically reduced.
+- **Smart Scaling** — Physics boundaries and cross-size limits now calculate dynamically. The inner cross is guaranteed to stay within the outer shape, regardless of complexity.
+
+### Features
+- **Enhanced Random Mode** — The "Everything Random" action now includes the Cross Hole feature, randomizing its state, size, and movement intervals for ultimate variety.
+- **Attention Cues** — The auto-cycle button now subtly flashes in RGB when inactive, guiding new users to the most fun feature without being intrusive.
+- **UI Refinements** — Polished mobile scaling with a new sliding settings menu, blur-backdrop, and touch-optimized controls.
+
+### Improvements
+- **Project Structure** — Organized files into a clean `css/` and `js/` hierarchy.
+- **Persistent Logic** — Fog and trail settings are now strictly user-controlled and won't be overridden by random actions.
+- **Ball Limit** — Maximum ball count capped at 500 for stability, with random actions targeting a safe 60% load (300 balls).
 
 ---
 
@@ -32,7 +51,7 @@ All notable changes to Ball Bouncer are documented here.
 - **Panel layout rework** — Sound (Ton) section moved above Everything Random for a more logical flow
 - **Pause halts all cycles** — pressing Pause now freezes every auto-cycle (shapes, cross, themes, background, everything-random) and pauses the countdown bar; Resume restarts them all
 - **Cross Hole controls dim when disabled** — hole size and cycle sliders become visually greyed out when Cross Hole is toggled off, making the panel state immediately readable
-- **Floating logo scales with cross size** — canvas "Ball Bouncer" label now stays proportionally near the cross arm tip regardless of cross size (small or large)
+- **Floating logo scales with cross size** — canvas "BallBouncer" label now stays proportionally near the cross arm tip regardless of cross size (small or large)
 - **SEO overhaul** — full Open Graph, Twitter card, JSON-LD structured data, canonical URL, and robots meta; `vercel.json` updated with security headers and proper rewrites
 
 ---

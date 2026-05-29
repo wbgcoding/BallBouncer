@@ -3,7 +3,7 @@ _Date: 2026-05-16_
 
 ## Summary
 
-Expand Ball Bouncer's outer shape and inner cross-shape libraries from 16+12 to 24+18, replacing boring regulars with abstract-geometric and character wild shapes, fixing the broken custom-shape icon renderer, and reducing button height to accommodate the extra row without scrolling.
+Expand BallBouncer's outer shape and inner cross-shape libraries from 16+12 to 24+18, replacing boring regulars with abstract-geometric and character wild shapes, fixing the broken custom-shape icon renderer, and reducing button height to accommodate the extra row without scrolling.
 
 ---
 

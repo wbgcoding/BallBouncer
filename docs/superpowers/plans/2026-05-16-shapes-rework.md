@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Expand Ball Bouncer's outer shapes from 16→24 and inner cross shapes from 12→18, fix broken custom-shape button icons, and shrink button height so the new 3rd row fits without panel scrolling.
+**Goal:** Expand BallBouncer's outer shapes from 16→24 and inner cross shapes from 12→18, fix broken custom-shape button icons, and shrink button height so the new 3rd row fits without panel scrolling.
 
 **Architecture:** All changes live in the single file `C:\Claude\ballbouncer\ballbouncer.html`. Shape definitions are static JS arrays (`SHAPES`, `CROSS_SHAPES`). Computed shapes (Gear, Crescent, Snowflake, Pinwheel, Star-Cross) are generated once at module init by helper functions and stored as `pts` arrays. The icon renderer, physics verts function, and drawing function each need a `custom:true` branch added or fixed.
 

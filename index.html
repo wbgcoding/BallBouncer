@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="BallBouncer — interactive physics playground. Launch balls inside spinning geometric shapes, tweak gravity, spin, fog trails and sounds in real time.">
+    <meta name="keywords" content="ballbouncer, ball bouncer, physics simulation, bouncing balls, geometric shapes, canvas game, interactive animation, particle physics">
+    <meta property="og:title" content="BallBouncer">
+    <meta property="og:description" content="Interactive physics playground — balls bouncing inside spinning shapes with customizable gravity, sounds and visual effects.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>BallBouncer</title>
+    <link rel="icon" id="favicon" type="image/png">
+    <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ── Ad column ─────────────────────────────────────────────── -->
+<div id="ad-left">
+    <div class="ad-label" data-i18n="sponsored">Sponsored</div>
+    <!--
+        Google AdSense setup:
+        1. Replace ca-pub-XXXXXXXXXXXXXXXX with your Publisher ID
+        2. Replace XXXXXXXXXX with your Ad Slot ID
+        3. Uncomment the ins block below (use "auto" format for full-height fill)
+    -->
+    <!--
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle"
+         style="display:block;width:140px;height:600px"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="XXXXXXXXXX"
+         data-ad-format="fixed"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    -->
+    <div class="ad-placeholder">
+        <div class="ad-placeholder-icon">◈</div>
+        <span>Ad Space<br>160 × full</span>
+    </div>
+    <div id="logo-bl">
+        <div class="logo-ball"></div>
+        <div class="logo-title">BallBouncer</div>
+    </div>
+</div>
+
+<canvas id="c"></canvas>
+<div id="canvas-logo">BallBouncer</div>
+
+<!-- Mobile Toggle & Backdrop -->
+<div id="panel-backdrop"></div>
+<button id="menuToggle" class="mobile-only" title="Toggle Settings">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+</button>
+
+<!-- ── Control panel ──────────────────────────────────────────── -->
+<div id="panel">
+
+    <!-- Logo -->
+    <div id="logo">
+        <div class="logo-ball"></div>
+        <div class="logo-title">BallBouncer</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-row">
+        <button id="pauseBtn" title="Pause simulation" data-i18n-title="pauseSim">
+            <svg width="11" height="13" viewBox="0 0 11 13" fill="currentColor">
+                <rect x="0.5" y="0.5" width="3.5" height="12" rx="1.5"/>
+                <rect x="7" y="0.5" width="3.5" height="12" rx="1.5"/>
+            </svg>
+        </button>
+
+        <!-- Language -->
+        <div class="lang-dropdown" id="lang-dropdown">
+            <button class="lang-trigger" id="langTrigger" title="Language" data-i18n-title="language">
+                <span id="langCode">EN</span>
+            </button>
+            <div class="lang-menu" id="langMenu">
+                <button class="lang-option" data-lang="en">EN</button>
+                <button class="lang-option" data-lang="de">DE</button>
+                <button class="lang-option" data-lang="es">ES</button>
+                <button class="lang-option" data-lang="fr">FR</button>
+                <button class="lang-option" data-lang="it">IT</button>
+                <button class="lang-option" data-lang="pt">PT</button>
+                <button class="lang-option" data-lang="ja">JA</button>
+                <button class="lang-option" data-lang="zh">ZH</button>
+            </div>
+        </div>
+
+        <button id="resetBtn" title="Reset simulation" data-i18n-title="resetTitle">&#10227; <span data-i18n="reset">Reset</span></button>
+    </div>
+    <div id="rnd-all-row">
+        <button id="rndAllBtn" title="Randomize everything" data-i18n-title="rndAll">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M5 0l.65 4.35L10 5l-4.35.65L5 10l-.65-4.35L0 5l4.35-.65Z"/></svg>
+            <span data-i18n="rndAllLabel">Everything Random</span>
+        </button>
+        <button id="cycleAllBtn" title="Auto-randomize everything every 5 s" data-i18n-title="cycleAll">&#8634;</button>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Sound -->
+    <div id="sound-section">
+        <div class="sec-header">
+            <div class="sec-title" data-i18n="sound">Sound</div>
+            <button id="muteAllBtn" title="Mute all" data-i18n-title="muteAll">
+                <span class="btn-icon">&#128266;</span>
+            </button>
+        </div>
+        <div id="audio-bar">
+            <div class="audio-row">
+                <button id="muteBtn" class="mute-btn" title="Toggle music" data-i18n-title="toggleMusic">
+                    <span class="btn-icon">&#9835;</span>
+                    <span class="mute-slash"></span>
+                </button>
+                <input type="range" id="sVolume" min="0" max="100" value="10" title="Music volume" data-i18n-title="musicVolume">
+            </div>
+            <div class="audio-row">
+                <button id="ballMuteBtn" class="mute-btn" title="Toggle ball sounds" data-i18n-title="toggleBallSound">
+                    <span class="btn-icon"><span class="sound-ball"></span></span>
+                    <span class="mute-slash"></span>
+                </button>
+                <input type="range" id="sBallSound" min="0" max="100" value="2" title="Ball hit volume" data-i18n-title="ballHitVolume">
+            </div>
+        </div>
+        <div class="ctrl" style="margin-top:4px">
+            <label>
+                <span style="display:flex;align-items:center;gap:3px">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style="opacity:.65;flex-shrink:0"><path d="M0 .5L4.2 5 0 9.5z"/><path d="M5 .5L9.2 5 5 9.5z"/></svg>
+                    <span data-i18n="speed">Speed</span>
+                </span>
+                <span id="vGameSpeed">1×</span>
+            </label>
+            <input type="range" id="sGameSpeed" min="1" max="10" value="1">
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Shape -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title" data-i18n="shape">Shape</div>
+            <div style="display:flex;gap:4px;align-items:center">
+                <button id="dirShape" class="dir-btn-mini" title="Reverse shape rotation" data-i18n-title="revShapeRot">
+                    <span id="dirShapeL" class="dir-badge">L</span>
+                    <span id="dirShapeR" class="dir-badge on">R</span>
+                </button>
+                <button class="cycle-btn" id="cycleShape" title="Auto-cycle shapes every 10–20 s" data-i18n-title="autoCycleShape">&#8634;</button>
+                <button class="rnd-btn" id="rndShape" title="Random shape" data-i18n-title="rndShapeBtn">&#8635;<span class="rnd-one">1</span></button>
+            </div>
+        </div>
+        <div id="shape-grid"></div>
+        <div class="ctrl-pair" style="margin-top:6px">
+            <div class="ctrl">
+                <label><span data-i18n="size">Size</span> <span id="vShapeSize">50</span></label>
+                <input type="range" id="sShapeSize" min="1" max="100" value="50">
+            </div>
+            <div class="ctrl">
+                <label><span data-i18n="speed">Speed</span> <span id="vShapeSpeed">2</span></label>
+                <input type="range" id="sShapeSpeed" min="1" max="20" value="2">
+            </div>
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Cross -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title" data-i18n="cross">Cross</div>
+            <div style="display:flex;gap:4px;align-items:center">
+                <button id="dirCross" class="dir-btn-mini" title="Reverse cross rotation" data-i18n-title="revCrossRot">
+                    <span id="dirCrossL" class="dir-badge on">L</span>
+                    <span id="dirCrossR" class="dir-badge">R</span>
+                </button>
+                <button class="cycle-btn" id="cycleCross" title="Auto-cycle cross shapes every 10–20 s" data-i18n-title="autoCycleCross">&#8634;</button>
+                <button class="rnd-btn" id="rndCross" title="Random cross shape" data-i18n-title="rndCrossBtn">&#8635;<span class="rnd-one">1</span></button>
+            </div>
+        </div>
+        <div id="cross-grid"></div>
+        <div class="ctrl-pair" style="margin-top:6px">
+            <div class="ctrl">
+                <label><span data-i18n="size">Size</span> <span id="vCrossSize">50</span></label>
+                <input type="range" id="sCrossSize" min="1" max="100" value="50">
+            </div>
+            <div class="ctrl">
+                <label><span data-i18n="speed">Speed</span> <span id="vCrossSpeed">1</span></label>
+                <input type="range" id="sCrossSpeed" min="1" max="20" value="1">
+            </div>
+        </div>
+        <!-- Cross Hole toggle with cycle button -->
+        <div class="toggle-row">
+            <span data-i18n="crossHole">Cross Hole</span>
+            <span style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+                <button id="holeCycleBtn" class="hole-cycle-btn" title="Advance to next arm" data-i18n-title="nextArm">&#10140;</button>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="crossHoleCheck">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </label>
+            </span>
+        </div>
+        <div id="crossHoleControls" style="display:none">
+            <div class="hole-controls">
+                <span data-i18n="hole">Hole</span>
+                <input type="range" id="sCrossHoleSize" class="hole-ctrl-slider"
+                       min="1" max="3" value="1" step="1" title="Hole size" data-i18n-title="holeSizeTitle">
+            </div>
+            <div class="hole-controls">
+                <span data-i18n="cycle">Cycle</span>
+                <input type="range" id="sCrossHoleTimeout" class="hole-ctrl-slider"
+                       min="0" max="10" value="5" step="1" title="Cycle speed" data-i18n-title="cycleSpdTitle">
+                <span id="vCrossHoleTimeout">5s</span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Balls -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title" data-i18n="ballColors">Ball Colors</div>
+            <button class="rnd-btn" id="rndBallTheme" title="Random ball colors" data-i18n-title="rndBallColors">&#8635;</button>
+        </div>
+        <div id="ball-theme-grid"></div>
+        <div class="ctrl-pair" style="margin-top:6px">
+            <div class="ctrl">
+                <label><span data-i18n="balls">Balls</span> <span id="vBalls">100</span></label>
+                <input type="range" id="sBalls" min="1" max="500" value="100">
+            </div>
+            <div class="ctrl">
+                <label><span data-i18n="size">Size</span> <span id="vBallSize">8</span></label>
+                <input type="range" id="sBallSize" min="3" max="18" value="8">
+            </div>
+        </div>
+        <div class="ctrl-pair">
+            <div class="ctrl">
+                <label><span data-i18n="speed">Speed</span> <span id="vBallSpeed">5</span></label>
+                <input type="range" id="sBallSpeed" min="1" max="20" value="5">
+            </div>
+            <div class="ctrl">
+                <label><span data-i18n="randSize">Rand Size</span> <span id="vSizeRandom">0</span></label>
+                <input type="range" id="sSizeRandom" min="0" max="10" value="0">
+            </div>
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Physics -->
+    <div>
+        <div class="sec-title" data-i18n="physics">Physics</div>
+        <div class="ctrl-pair">
+            <div class="ctrl">
+                <label><span data-i18n="gravity">Gravity</span> <span id="vGravity">5</span></label>
+                <input type="range" id="sGravity" min="0" max="10" value="5">
+            </div>
+            <div class="ctrl">
+                <label><span data-i18n="fog">Fog</span> <span id="vFogTrail">0</span></label>
+                <input type="range" id="sFogTrail" min="0" max="30" value="0">
+            </div>
+        </div>
+        <div class="ctrl">
+            <label><span data-i18n="gAngle">G-Angle</span> <span id="vGravityAngle">0</span>°</label>
+            <input type="range" id="sGravityAngle" min="0" max="360" value="0" step="45">
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Background -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title" data-i18n="background">Background</div>
+            <button class="rnd-btn" id="rndFogTheme" title="Random background style" data-i18n-title="rndBgStyle">&#8635;</button>
+        </div>
+        <div id="fog-theme-grid"></div>
+        <div id="animSpeedControl" class="ctrl" style="margin-top:6px;display:none">
+            <label><span data-i18n="animSpeed">Anim Speed</span> <span id="vAnimSpeed">50</span>%</label>
+            <input type="range" id="sAnimSpeed" min="1" max="100" value="50">
+        </div>
+        <div class="rnd-row">
+            <label class="toggle-row">
+                <span data-i18n="randomBg">Random Bg</span>
+                <span class="toggle-switch">
+                    <input type="checkbox" id="rndBgCheck">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </span>
+            </label>
+            <label class="toggle-row">
+                <span data-i18n="randomTheme">Random Theme</span>
+                <span class="toggle-switch">
+                    <input type="checkbox" id="rndThemesCheck">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </span>
+            </label>
+        </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Theme -->
+    <div>
+        <div class="sec-header">
+            <div class="sec-title" data-i18n="theme">Theme</div>
+            <button class="rnd-btn" id="rndTheme" title="Random theme" data-i18n-title="rndThemeBtn">&#8635;</button>
+        </div>
+        <div id="theme-grid"></div>
+    </div>
+
+    <hr class="sep">
+
+</div>
+    <script src="js/script.js"></script>
+</body>
+</html>
