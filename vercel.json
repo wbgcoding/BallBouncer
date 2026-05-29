@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/ballbouncer.html", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
