@@ -66,9 +66,10 @@ canvas { display:block; flex:1; }
         background:rgba(7,7,26,0.98);
         backdrop-filter:blur(20px);
         box-shadow:-10px 0 40px rgba(0,0,0,0.9);
-        padding:12px 12px 24px;
+        padding:12px 12px 80px;
         display:flex; flex-direction:column; gap:7px;
         overflow-y:scroll; -webkit-overflow-scrolling:touch;
+        height:100dvh; /* adjusts for browser UI bars on mobile */
     }
     #panel.open { right:0; }
     /* Prevent flex from shrinking children — required for overflow-y:scroll to work */
