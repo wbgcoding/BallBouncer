@@ -1,12 +1,12 @@
 # BallBouncer
 
-A small physics toy that runs in the browser. Balls bounce around inside a spinning shape while you mess with gravity, rotation, colors and sound. No build step, no dependencies — it's one HTML file, some CSS and a single script.
+A small physics toy that runs in the browser. Balls bounce around inside a spinning shape while you mess with gravity, rotation, colors and sound.
 
 **[Try it here](https://ballbouncer.vercel.app)**
 
 ## Screenshots
 
-| Default view | After "Everything Random" |
+| Default view | Everything Random |
 |---|---|
 | ![Default view](docs/screenshot-standard.png) | ![Random layout](docs/screenshot-random.png) |
 
@@ -33,16 +33,6 @@ Balls spawn on their own. From there:
 - Sliders for ball count, size, speed and randomness are under "Ball Colors".
 
 Your shape, physics and sound settings are saved in `localStorage`. The color themes reroll on each visit, so it looks a little different every time you open it.
-
-## Running it locally
-
-It's static, so any web server works:
-
-```powershell
-# from the project folder
-python -m http.server 8000
-# then open http://localhost:8000
-```
 
 ## Built with
 
