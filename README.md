@@ -1,60 +1,52 @@
-# 🎱 BallBouncer
+# BallBouncer
 
-**A high-performance physics playground** — launch hundreds of balls into spinning geometric worlds. Fine-tune gravity, rotation, and psychedelic visual effects in real-time.
+A small physics toy that runs in the browser. Balls bounce around inside a spinning shape while you mess with gravity, rotation, colors and sound. No build step, no dependencies — it's one HTML file, some CSS and a single script.
 
-🔗 **[Live Demo](https://ballbouncer.vercel.app)**
+**[Try it here](https://ballbouncer.vercel.app)**
 
----
+## Screenshots
 
-## 📸 Visual Tour
+| Default view | After "Everything Random" |
+|---|---|
+| ![Default view](docs/screenshot-standard.png) | ![Random layout](docs/screenshot-random.png) |
 
-| **Pure Performance** | **Modern Mobile UI** | **Dynamic Geometry** |
-|:---:|:---:|:---:|
-| ![Action](docs/screenshot-balls.jpg) | ![UI](docs/screenshot-themes.jpg) | ![Shapes](docs/screenshot-hole.jpg) |
-| *Witness rock-solid 60 FPS even with hundreds of active entities.* | *A completely revamped, touch-optimized settings overlay.* | *Intelligent boundary logic keeps every element perfectly contained.* |
+The panel on the right controls everything. The random button rerolls the shape, cross, colors and background in one click.
 
----
+## What it does
 
-## What makes BallBouncer special?
+- 32 outer shapes (polygons, stars, plus things like a heart, ghost, rocket and skull) and 24 inner cross shapes that spin independently.
+- Adjustable gravity strength and direction — you can flip it sideways or upside down.
+- An optional gap in the cross that balls can fall through. It can step to the next arm manually or cycle on a timer.
+- 14 color themes, 14 ball palettes and 14 background styles, mixed and matched however you like.
+- A generative ambient soundtrack plus a short tone on each ball hit, panned by where the ball is.
+- Trails, a fog effect, and per-ball spin that you can actually see on the highlight.
+- Runs at 60 FPS with a few hundred balls; scales down cleanly on phones.
+- UI translated into 8 languages (EN, DE, ES, FR, IT, PT, JA, ZH).
 
-- **Butter-Smooth Performance:** Optimized for 60 FPS on everything from desktop workstations to older smartphones.
-- **Infinite Variety:** 32 hand-crafted outer shapes and 24 inner cross patterns combine with 14 color themes for billions of possibilities.
-- **Interactive Physics:** Change gravity's strength and direction, tweak spin speeds, and let balls escape through dynamic holes.
-- **Generative Soundscape:** Every impact creates a spatial, reverb-soaked note that forms a unique ambient melody.
-- **Zero Friction:** No installs, no loading screens. Just physics.
+## Controls
 
----
+Balls spawn on their own. From there:
 
-## ⚙️ Features at a Glance
+- Drag the **Gravity** and **Spin** sliders and watch the motion change.
+- Pick a shape or cross from the grids, or hit the dice button next to each to randomize just that one.
+- **Everything Random** rerolls the whole scene. **↺ Cycle** keeps changing it on its own every few seconds.
+- Sliders for ball count, size, speed and randomness are under "Ball Colors".
 
-### Physics
-- **32 Shapes:** Polygons, stars, and characters like Ghost, Cat, and Rocket.
-- **24 Crosses:** From simple plus-signs to complex Snowflake and Triquetra patterns.
-- **Dynamic Gravity:** Drag the G-Angle to flip gravity sideways or upside down.
-- **Hole Logic:** Configurable gaps that cycle between arms manually or automatically.
-- **Collision Sparks:** High-speed bursts that obey world physics.
+Your shape, physics and sound settings are saved in `localStorage`. The color themes reroll on each visit, so it looks a little different every time you open it.
 
-### Visuals & UI
-- **14 Themes:** Neon, SciFi, Aurora, and more with instant switching.
-- **Bézier Trails:** Smooth comet trails that trace every ball's journey.
-- **Responsive Design:** A mobile-first UI with a clean settings overlay and touch-friendly controls.
-- **Retina Ready:** Full HiDPI support for razor-sharp rendering on high-resolution screens.
-- **Multi-language:** Localized into 8 languages (EN, DE, ES, FR, IT, PT, JA, ZH).
+## Running it locally
 
----
+It's static, so any web server works:
 
-## 🕹️ How to Play
+```powershell
+# from the project folder
+python -m http.server 8000
+# then open http://localhost:8000
+```
 
-1. **Watch it go:** Balls spawn automatically. Watch how they react to the spinning world.
-2. **Experiment:** Drag the **Gravity** and **Spin** sliders to see how the motion changes.
-3. **Get Wild:** Hit the **Everything Random** button for a completely new setup.
-4. **Auto-Pilot:** Enable the **↺ Cycle** button to let the world evolve on its own every few seconds.
+## Built with
 
----
-
-## 🛠️ Tech Stack
-
-- **Vanilla JavaScript:** Zero dependencies, pure logic.
-- **HTML5 Canvas 2D:** Optimized rendering with vertex pooling.
-- **Web Audio API:** Real-time synthesis and spatial audio processing.
-- **Vercel:** Globally distributed edge hosting.
+- Plain JavaScript, no frameworks.
+- HTML5 Canvas 2D for rendering, with cached ball sprites and an offscreen background layer.
+- The Web Audio API for the synth and hit sounds.
+- Hosted on Vercel.

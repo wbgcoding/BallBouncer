@@ -38,45 +38,10 @@ canvas { display:block; flex:1; }
 .rnd-row { display:flex; gap:6px; margin-top:6px; }
 .rnd-row .toggle-row { flex:1; font-size:8px; padding:2px 0; margin-top:0; }
 
-/* ── Ad column ─────────────────────────────────────── */
-#ad-left {
-    position:fixed; left:0; top:0;
-    width:160px; height:100vh; z-index:100;
-    display:flex; flex-direction:column; align-items:center;
-    padding:14px 8px 10px; gap:8px; overflow:hidden;
-    background:linear-gradient(175deg,rgba(6,6,26,.90) 0%,rgba(4,4,16,.82) 100%);
-    backdrop-filter:blur(18px) saturate(1.3);
-    -webkit-backdrop-filter:blur(18px) saturate(1.3);
-    border-right:1px solid rgba(0,212,255,.10);
-    box-shadow:4px 0 50px rgba(0,0,0,.75), inset -1px 0 0 rgba(0,212,255,.06);
-}
-#ad-left::after {
-    content:''; position:absolute; top:0; left:0; right:0; height:40px;
-    background:linear-gradient(to bottom,rgba(0,212,255,.04),transparent);
-    pointer-events:none;
-}
-@media (max-width:800px) { #ad-left { display:none; } }
-
-.ad-label {
-    font-size:7px; letter-spacing:.28em; text-transform:uppercase;
-    color:rgba(255,255,255,.10); width:100%; text-align:center; flex-shrink:0;
-}
-.ad-placeholder {
-    flex:1; width:140px;
-    border:1px dashed rgba(0,212,255,.07); border-radius:8px;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:8px;
-    background:rgba(0,212,255,.015);
-}
-.ad-placeholder-icon { font-size:18px; opacity:.08; }
-.ad-placeholder span { font-size:8px; color:rgba(255,255,255,.10); text-align:center; line-height:1.7; letter-spacing:.08em; }
-
 /* ── Mobile & Scaling ───────────────────────────────── */
 .mobile-only { display:none; }
 
 @media (max-width:800px) {
-    #ad-left { display:none; }
-    
     body { flex-direction:column; }
     
     .mobile-only {
@@ -368,14 +333,6 @@ canvas { display:block; flex:1; }
 .dir-badge.on { color:var(--accent); background:rgba(0,180,255,.14); }
 
 /* ── Bottom-left logo (inside ad column) ───────── */
-#logo-bl {
-    flex-shrink:0;
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    pointer-events:none; opacity:0.82;
-    padding:5px 0;
-}
-#logo-bl .logo-ball  { width:16px; height:16px; }
-#logo-bl .logo-title { font-size:12px; }
 
 /* ── Action row (Pause + Reset + Lang) ─────────── */
 .action-row { display:flex; gap:6px; margin-bottom:12px; }

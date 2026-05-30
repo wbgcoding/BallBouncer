@@ -14,5 +14,6 @@ js/script.js.new
 js/chunk*.txt
 .omg/
 .remember/
+.playwright-mcp/
 .claude-plugin/
 docs/superpowers/

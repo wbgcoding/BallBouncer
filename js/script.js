@@ -23,11 +23,8 @@ const BOUNDARY_BOUNCE      = 2.0;      // boundary safety bounce coefficient
 const FRICTION_FACTOR      = 0.22;     // tangential friction factor for spin transfer
 const BALL_FRICTION_FACTOR = 0.12;     // ball-to-ball tangential friction factor
 
-let cachedAdW = 0;
-function adVisW() { return window.innerWidth > 800 ? 160 : 0; }
 function updateRadius() {
-    const adW = adVisW();
-    SHAPE_R = (shapeSize / 100) * 0.90 * Math.min(W - adW, H);
+    SHAPE_R = (shapeSize / 100) * 0.90 * Math.min(W, H);
     
     let minOuterR = SHAPE_R;
     const shape = typeof currentShape !== 'undefined' ? currentShape : null;
@@ -59,7 +56,7 @@ function resizeCanvas() {
     c.style.width = cssW + 'px'; c.style.height = cssH + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     W = cssW; H = cssH;
-    cx = adVisW() + (cssW - adVisW()) / 2; cy = H / 2;
+    cx = cssW / 2; cy = H / 2;
     updateRadius();
     bgCanvas.width = Math.round(W * DPR); bgCanvas.height = Math.round(H * DPR);
     bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -642,10 +639,14 @@ function getCrossTipForArm(iVerts, armIdx) {
     const shape = currentCrossShape;
     if (shape.custom || !shape.arms) {
         const tips = getCustomArmTips(iVerts);
-        return tips[armIdx % tips.length];
+        return tips[armIdx % tips.length] || tips[0];
     }
-    const capIdx = (armIdx % shape.arms) * 3;
-    const a = iVerts[capIdx], b = iVerts[(capIdx + 1) % iVerts.length];
+    const n = iVerts.length;
+    // Clamp into range: lastInnerVerts may briefly belong to a cross with
+    // fewer vertices than the current one (e.g. during rapid randomization).
+    const capIdx = ((armIdx % shape.arms) * 3) % n;
+    const a = iVerts[capIdx], b = iVerts[(capIdx + 1) % n];
+    if (!a || !b) return getCrossTipCenter(iVerts);
     return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, capIdx };
 }
 
@@ -1571,7 +1572,7 @@ function draw() {
         logoLocalAngle = Math.atan2(tip.y - cy, tip.x - cx) - innerShapeAngle;
     }
     const tipAngle = logoLocalAngle + innerShapeAngle, logoSz = Math.max(10, Math.min(22, INNER_R * 0.18)), dist = INNER_R + logoSz * 1.6;
-    logoEl.style.left = `${cachedAdW + cx + Math.cos(tipAngle) * dist}px`;
+    logoEl.style.left = `${cx + Math.cos(tipAngle) * dist}px`;
     logoEl.style.top = `${cy + Math.sin(tipAngle) * dist}px`;
     logoEl.style.transform = `translate(-50%,-50%) rotate(${tipAngle + Math.PI / 2}rad)`;
     logoEl.style.fontSize = `${logoSz}px`;
@@ -1597,7 +1598,7 @@ function draw() {
         }
         ctx.stroke();
         const gA = iv[(ci - half + ni) % ni], gB = iv[(ci + half + 1) % ni];
-        drawPortalDot(gA.x, gA.y, 9); drawPortalDot(gB.x, gB.y, 9);
+        if (gA && gB) { drawPortalDot(gA.x, gA.y, 9); drawPortalDot(gB.x, gB.y, 9); }
     } else ctx.stroke();
 
     if (trailLength > 0) {
@@ -1682,7 +1683,7 @@ CROSS_SHAPES.forEach(shape => {
     crossGrid.appendChild(btn);
 });
 
-slider('sCrossSize', 'vCrossSize', v => { updateRadius(); updateHoleSizeMax(); });
+slider('sCrossSize', 'vCrossSize', v => { updateRadius(); updateHoleSizeMax(); logoEl.style.display = v <= 1 ? 'none' : ''; });
 slider('sCrossSpeed', 'vCrossSpeed', v => { innerSpin = v * 0.0026 * innerSpinSign; });
 
 // ── Theme functions ────────────────────────────────────────────
@@ -1797,7 +1798,6 @@ const fogSwatchGrads = {
     firework: 'linear-gradient(135deg,#ff00ff,#00ffff,#ffff00,#ff00aa)',
     ocean:    'linear-gradient(135deg,#001133,#0066cc,#00aaff)',
     aurora:   'linear-gradient(135deg,#004422,#00ff88,#00ccff)',
-    storm:    'linear-gradient(135deg,#223344,#4488dd,#88aacc)',
     bloodfog: 'linear-gradient(135deg,#440011,#cc1133,#ff4444)',
     acidfog:  'linear-gradient(135deg,#334400,#aaff00,#ffff44)',
     void:     'linear-gradient(135deg,#110022,#330055,#6600aa)',
@@ -1824,7 +1824,6 @@ const STRINGS = {
         language:'Language', hole:'Hole', cycle:'Cycle',
         randomBg:'Random Bg', randomTheme:'Random Theme',
         animSpeed:'Anim Speed', physics:'Physics',
-        sponsored:'Sponsored',
         // labels
         reset:'Reset', speed:'Speed', size:'Size', gravity:'Gravity',
         fog:'Fog', gAngle:'G-Angle', balls:'Balls', randSize:'Rand Size',
@@ -1872,7 +1871,6 @@ const STRINGS = {
         language:'Sprache', hole:'Loch', cycle:'Wechsel',
         randomBg:'Zuf. Bg', randomTheme:'Zuf. Thema',
         animSpeed:'Animtempo', physics:'Physik',
-        sponsored:'Werbung',
         reset:'Zurücksetzen', speed:'Tempo', size:'Größe', gravity:'Schwerkraft',
         fog:'Nebel', gAngle:'Schwerkraftwinkel', balls:'Bälle', randSize:'Zuf. Größe',
         pauseSim:'Simulation pausieren', resumeSim:'Simulation fortsetzen',
@@ -1915,7 +1913,6 @@ const STRINGS = {
         language:'Idioma', hole:'Agujero', cycle:'Ciclo',
         randomBg:'Bg Aleatorio', randomTheme:'Tema Aleatorio',
         animSpeed:'Vel. Anim.', physics:'Física',
-        sponsored:'Patrocinado',
         reset:'Restablecer', speed:'Velocidad', size:'Tamaño', gravity:'Gravedad',
         fog:'Niebla', gAngle:'Ángulo G', balls:'Pelotas', randSize:'Tam. Aleatorio',
         pauseSim:'Pausar simulación', resumeSim:'Reanudar simulación',
@@ -1961,7 +1958,6 @@ const STRINGS = {
         language:'Langue', hole:'Trou', cycle:'Cycle',
         randomBg:'Bg Aléat.', randomTheme:'Thème Aléat.',
         animSpeed:'Vit. Anim.', physics:'Physique',
-        sponsored:'Sponsorisé',
         reset:'Réinitialiser', speed:'Vitesse', size:'Taille', gravity:'Gravité',
         fog:'Brouillard', gAngle:'Angle G', balls:'Balles', randSize:'Taille Aléat.',
         pauseSim:'Mettre en pause', resumeSim:'Reprendre',
@@ -2007,7 +2003,6 @@ const STRINGS = {
         language:'Lingua', hole:'Buco', cycle:'Ciclo',
         randomBg:'Bg Casuale', randomTheme:'Tema Casuale',
         animSpeed:'Vel. Anim.', physics:'Fisica',
-        sponsored:'Sponsorizzato',
         reset:'Reimposta', speed:'Velocità', size:'Dimensione', gravity:'Gravità',
         fog:'Nebbia', gAngle:'Angolo G', balls:'Palle', randSize:'Dim. Casuale',
         pauseSim:'Metti in pausa', resumeSim:'Riprendi',
@@ -2053,7 +2048,6 @@ const STRINGS = {
         language:'Idioma', hole:'Buraco', cycle:'Ciclo',
         randomBg:'Bg Aleatório', randomTheme:'Tema Aleatório',
         animSpeed:'Vel. Anim.', physics:'Física',
-        sponsored:'Patrocinado',
         reset:'Redefinir', speed:'Velocidade', size:'Tamanho', gravity:'Gravidade',
         fog:'Névoa', gAngle:'Ângulo G', balls:'Bolas', randSize:'Tam. Aleatório',
         pauseSim:'Pausar simulação', resumeSim:'Retomar simulação',
@@ -2099,7 +2093,6 @@ const STRINGS = {
         language:'言語', hole:'穴', cycle:'サイクル',
         randomBg:'ランダムBg', randomTheme:'ランダムテーマ',
         animSpeed:'アニメ速度', physics:'物理',
-        sponsored:'スポンサー',
         reset:'リセット', speed:'速度', size:'サイズ', gravity:'重力',
         fog:'霧', gAngle:'重力角度', balls:'ボール', randSize:'サイズ変動',
         pauseSim:'シミュレーションを一時停止', resumeSim:'シミュレーションを再開',
@@ -2145,7 +2138,6 @@ const STRINGS = {
         language:'语言', hole:'孔', cycle:'循环',
         randomBg:'随机背景', randomTheme:'随机主题',
         animSpeed:'动画速度', physics:'物理',
-        sponsored:'赞助',
         reset:'重置', speed:'速度', size:'大小', gravity:'重力',
         fog:'雾', gAngle:'重力角度', balls:'球', randSize:'随机大小',
         pauseSim:'暂停模拟', resumeSim:'恢复模拟',
@@ -2187,7 +2179,6 @@ const STRINGS = {
     },
 };
 let currentLang = 'en';
-const LANG_FLAGS = { en:'🇬🇧', de:'🇩🇪', es:'🇪🇸', fr:'🇫🇷', it:'🇮🇹', pt:'🇵🇹', ja:'🇯🇵', zh:'🇨🇳' };
 
 function setLang(code) {
     if (!STRINGS[code]) return;
@@ -2209,8 +2200,6 @@ function setLang(code) {
     document.querySelectorAll('.lang-option').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.lang === code)
     );
-    const flagEl = document.getElementById('langFlag');
-    if (flagEl) flagEl.textContent = LANG_FLAGS[code] || '';
     document.getElementById('langCode').textContent = code.toUpperCase();
 
     // Refresh range labels that use localized strings like 'None'
@@ -2426,6 +2415,7 @@ scheduleAttentionFlash();
 document.getElementById('resetBtn').addEventListener('click', () => {
     if (paused) { paused = false; pauseBtn.innerHTML = ICON_PAUSE; pauseBtn.classList.remove('paused'); }
     applySettings(DEFAULTS);
+    setBallTheme(currentBallTheme, true);
     localStorage.removeItem('bb');
     shapeAngle = 0; innerShapeAngle = 0;
     for (let i = 0, len = balls.length; i < len; i++) respawnBall(balls[i]);
