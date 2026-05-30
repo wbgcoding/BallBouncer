@@ -67,6 +67,7 @@ canvas { display:block; flex:1; }
         backdrop-filter:blur(20px);
         box-shadow:-10px 0 40px rgba(0,0,0,0.9);
         padding:60px 12px 20px;
+        display:flex; flex-direction:column; gap:7px; overflow-y:auto;
     }
     #panel.open { right:0; }
     
@@ -80,7 +81,7 @@ canvas { display:block; flex:1; }
     #panel-backdrop.open { display:block; }
     
     #canvas-logo {
-        left:16px !important; bottom:16px !important;
+        top:auto !important; left:16px !important; bottom:16px !important;
         transform:none !important;
         font-size:16px !important;
         opacity: 0.6;
@@ -99,27 +100,27 @@ canvas { display:block; flex:1; }
     .lang-trigger { min-height:34px; min-width:42px; }
 }
 
-/* ── Panel ─────────────────────────────────────── */
-#panel {
-    width:220px; flex-shrink:0; position:relative;
-    background:var(--panel-bg);
-    border-left:1px solid var(--panel-border);
-    padding:10px 8px 8px;
-    display:flex; flex-direction:column; gap:7px;
-    overflow-y:auto;
+/* ── Panel (desktop) ────────────────────────────── */
+@media (min-width:801px) {
+    #panel {
+        width:220px; flex-shrink:0; position:relative;
+        background:var(--panel-bg);
+        border-left:1px solid var(--panel-border);
+        padding:10px 8px 8px;
+        display:flex; flex-direction:column; gap:7px;
+        overflow-y:auto;
+    }
+    #panel::before {
+        content:'';
+        position:absolute; top:0; left:0; right:0; height:36px;
+        background:linear-gradient(to bottom, rgba(0,212,255,.05), transparent);
+        pointer-events:none; z-index:0;
+    }
+    #panel::-webkit-scrollbar { width:3px; }
+    #panel::-webkit-scrollbar-track { background:transparent; }
+    #panel::-webkit-scrollbar-thumb { background:#1a2a40; border-radius:2px; }
+    #panel::-webkit-scrollbar-thumb:hover { background:var(--accent); }
 }
-/* Subtle top accent fade */
-#panel::before {
-    content:'';
-    position:absolute; top:0; left:0; right:0; height:36px;
-    background:linear-gradient(to bottom, rgba(0,212,255,.05), transparent);
-    pointer-events:none; z-index:0;
-}
-/* Custom scrollbar */
-#panel::-webkit-scrollbar { width:3px; }
-#panel::-webkit-scrollbar-track { background:transparent; }
-#panel::-webkit-scrollbar-thumb { background:#1a2a40; border-radius:2px; }
-#panel::-webkit-scrollbar-thumb:hover { background:var(--accent); }
 
 /* ── Logo ──────────────────────────────────────── */
 #logo {
