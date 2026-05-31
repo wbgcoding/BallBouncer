@@ -17,3 +17,4 @@ js/chunk*.txt
 .playwright-mcp/
 .claude-plugin/
 docs/superpowers/
+.gitignore

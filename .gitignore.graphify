@@ -1,0 +1,2 @@
+# Graphify patterns to ignore duplicate script.js detection
+!/js/script.js  # Ignore js/ subdirectory - single root script.js covers it

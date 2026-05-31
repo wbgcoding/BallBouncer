@@ -1,0 +1,8 @@
+# Session/tooling state — not part of the codebase, keep out of the graph
+.claude/
+.remember/
+.omg/
+graphify-out/
+.git/
+# Backup utility
+BACKUP.bat
