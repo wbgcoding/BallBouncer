@@ -589,14 +589,6 @@ sVolumeEl.addEventListener('input', function () {
     saveSettings();
 });
 
-// ── Physics state ──────────────────────────────────────────────
-shapeSpinSign = 1; innerSpinSign = 1;
-crossHoleTip = null; crossHoleHalf = 2;
-crossHoleArmIdx = 0; crossHoleNextChange = 0; crossHoleInterval = 5000;
-crossHoleLocalAngle = null;
-logoArmIdx = 0; logoNextChange = 0; logoLocalAngle = null;
-gameSpeed = 1;
-
 function getCrossTipCenter(iVerts) {
     const n = iVerts.length;
     let maxD = 0, tipX = cx, tipY = cy, capIdx = 0;
@@ -1025,58 +1017,56 @@ function updateHoleSizeMax() {
     trackBg(el);
 }
 
-// ── Random Themes cycle ────────────────────────────────────────
-let _cycleTimer = null, _cycleActive = false;
+// ── Auto-cycle helpers ─────────────────────────────────────────
+const THEME_CYCLE_MS = 20000, SHAPE_CYCLE_MS = 10000;
 
-function scheduleNextCycle() {
-    _cycleTimer = setTimeout(() => {
-        if (!_cycleActive) return;
-        _suppressSave = true;
-        setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
-        setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
-        _suppressSave = false;
-        saveSettings();
-        scheduleNextCycle();
-    }, 20000 + Math.random() * 20000);
+// Repeats `action` at random intervals between base and 2×base while active
+function makeCycler(baseMs, action) {
+    let timer = null, active = false;
+    const schedule = () => {
+        timer = setTimeout(() => {
+            if (!active) return;
+            action();
+            schedule();
+        }, baseMs + Math.random() * baseMs);
+    };
+    return {
+        get active() { return active; },
+        set(on) {
+            active = on;
+            clearTimeout(timer);
+            timer = null;
+            if (on) schedule();
+        }
+    };
 }
 
+function randomizeThemes() {
+    _suppressSave = true;
+    setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
+    setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
+    _suppressSave = false;
+}
+
+function randomizeBg() {
+    _suppressSave = true;
+    setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
+    _suppressSave = false;
+}
+
+const themeCycler = makeCycler(THEME_CYCLE_MS, () => { randomizeThemes(); saveSettings(); });
+const bgCycler    = makeCycler(THEME_CYCLE_MS, () => { randomizeBg(); saveSettings(); });
+
 document.getElementById('rndThemesCheck').addEventListener('change', function() {
-    _cycleActive = this.checked;
-    clearTimeout(_cycleTimer);
-    _cycleTimer = null;
-    if (_cycleActive) {
-        _suppressSave = true;
-        setTheme(THEMES[Math.floor(Math.random() * THEMES.length)]);
-        setBallTheme(BALL_THEMES[Math.floor(Math.random() * BALL_THEMES.length)]);
-        _suppressSave = false;
-        scheduleNextCycle();
-    }
+    themeCycler.set(this.checked);
+    if (this.checked) randomizeThemes();
     saveSettings();
 });
 
-// ── Random Background cycle ────────────────────────────────────
-let _bgCycleTimer = null, _bgCycleActive = false;
-
-function scheduleNextBgCycle() {
-    _bgCycleTimer = setTimeout(() => {
-        if (!_bgCycleActive) return;
-        _suppressSave = true;
-        setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
-        _suppressSave = false;
-        saveSettings();
-        scheduleNextBgCycle();
-    }, 20000 + Math.random() * 20000);
-}
-
 document.getElementById('rndBgCheck').addEventListener('change', function() {
-    _bgCycleActive = this.checked;
-    clearTimeout(_bgCycleTimer);
-    _bgCycleTimer = null;
-    if (_bgCycleActive) {
-        _suppressSave = true;
-        setFogTheme(FOG_THEMES[Math.floor(Math.random() * FOG_THEMES.length)]);
-        _suppressSave = false;
-        scheduleNextBgCycle();
+    bgCycler.set(this.checked);
+    if (this.checked) {
+        randomizeBg();
     }
     saveSettings();
 });
@@ -1607,7 +1597,8 @@ function draw() {
         for (let i = 0; i < balls.length; i++) {
             const b = balls[i];
             if (!b.trail || b.trail.length < 2) continue;
-            const full = [...b.trail, { x: b.x, y: b.y }], fLen = full.length;
+            b.trail.push({ x: b.x, y: b.y });
+            const full = b.trail, fLen = full.length;
             for (let s = 0; s < SEG; s++) {
                 const frac = (s + 0.5) / SEG, i0 = (s * fLen / SEG) | 0, i1 = Math.min(((s + 1) * fLen / SEG) | 0, fLen - 1);
                 if (i1 <= i0) continue;
@@ -1624,6 +1615,7 @@ function draw() {
                 }
                 ctx.stroke();
             }
+            full.pop();
         }
         ctx.restore();
         ctx.globalAlpha = 1;
@@ -1834,7 +1826,7 @@ const STRINGS = {
         cycleAll:'Auto-randomize everything every 5 s',
         toggleMusic:'Toggle music', musicVolume:'Music volume',
         toggleBallSound:'Toggle ball sounds', ballHitVolume:'Ball hit volume',
-        muteAll:'Mute all audio',
+        muteAll:'Mute all audio', toggleSettings:'Open settings',
         revShapeRot:'Reverse shape rotation',
         autoCycleShape:'Auto-cycle shapes every 10–20 s',
         rndShapeBtn:'Random shape',
@@ -1879,7 +1871,7 @@ const STRINGS = {
         cycleAll:'Alles alle 5 s automatisch zufällig',
         toggleMusic:'Musik ein/aus', musicVolume:'Musiklautstärke',
         toggleBallSound:'Ballsound ein/aus', ballHitVolume:'Aufprall-Lautstärke',
-        muteAll:'Alles stummschalten',
+        muteAll:'Alles stummschalten', toggleSettings:'Einstellungen öffnen',
         revShapeRot:'Formrotation umkehren',
         autoCycleShape:'Formen alle 10–20 s wechseln',
         rndShapeBtn:'Zufällige Form',
@@ -1921,7 +1913,7 @@ const STRINGS = {
         cycleAll:'Auto-aleatorizar todo cada 5 s',
         toggleMusic:'Activar/desactivar música', musicVolume:'Volumen de música',
         toggleBallSound:'Activar/desactivar sonido', ballHitVolume:'Volumen de impacto',
-        muteAll:'Silenciar todo',
+        muteAll:'Silenciar todo', toggleSettings:'Abrir ajustes',
         revShapeRot:'Invertir rotación de forma',
         autoCycleShape:'Ciclar formas cada 10–20 s',
         rndShapeBtn:'Forma aleatoria',
@@ -1966,7 +1958,7 @@ const STRINGS = {
         cycleAll:'Tout aléatoire toutes les 5 s',
         toggleMusic:'Activer/désactiver la musique', musicVolume:'Volume de la musique',
         toggleBallSound:'Activer/désactiver le son', ballHitVolume:'Volume des impacts',
-        muteAll:'Tout couper',
+        muteAll:'Tout couper', toggleSettings:'Ouvrir les réglages',
         revShapeRot:'Inverser la rotation de la forme',
         autoCycleShape:'Cycler les formes toutes les 10–20 s',
         rndShapeBtn:'Forme aléatoire',
@@ -2011,7 +2003,7 @@ const STRINGS = {
         cycleAll:'Auto-casuale ogni 5 s',
         toggleMusic:'Attiva/disattiva musica', musicVolume:'Volume musica',
         toggleBallSound:'Attiva/disattiva suono', ballHitVolume:'Volume impatto',
-        muteAll:'Silenzia tutto',
+        muteAll:'Silenzia tutto', toggleSettings:'Apri impostazioni',
         revShapeRot:'Inverti rotazione forma',
         autoCycleShape:'Cicla forme ogni 10–20 s',
         rndShapeBtn:'Forma casuale',
@@ -2039,7 +2031,7 @@ const STRINGS = {
         Ocean:'Oceano', Neon:'Neon', Rainbow:'Arcobaleno', Gradient:'Sfumatura', Pearl:'Perla',
         Standard:'Standard', Blood:'Sangue', Rust:'Ruggine', Fire:'Fuoco', Solar:'Solare', Acid:'Acido', Aurora:'Aurora', Steel:'Acciaio', Void:'Vuoto', Galaxy:'Galassia', Sakura:'Sakura', Firework:'Fuochi d\'artificio',
         Lava:'Lava', Ember:'Brace', Gold:'Oro', Toxic:'Tossico', Forest:'Foresta', Mint:'Menta', SciFi:'SciFi', Inferno:'Inferno', Vibrant:'Vibrante', Plasma:'Plasma',
-        Red:'Rosso', Orange:'Arancione', Yellow:'Giallo', Green:'Verde', Cyan:'Ciano', Blue:'Blu', Violet:'Viola', Storm:'Sturm',
+        Red:'Rosso', Orange:'Arancione', Yellow:'Giallo', Green:'Verde', Cyan:'Ciano', Blue:'Blu', Violet:'Viola', Storm:'Tempesta',
         none:'Nessuno',
     },
     pt: {
@@ -2056,7 +2048,7 @@ const STRINGS = {
         cycleAll:'Auto-aleatório a cada 5 s',
         toggleMusic:'Ativar/desativar música', musicVolume:'Volume da música',
         toggleBallSound:'Ativar/desativar som', ballHitVolume:'Volume do impacto',
-        muteAll:'Silenciar tudo',
+        muteAll:'Silenciar tudo', toggleSettings:'Abrir configurações',
         revShapeRot:'Inverter rotação da forma',
         autoCycleShape:'Ciclar formas a cada 10–20 s',
         rndShapeBtn:'Forma aleatória',
@@ -2101,7 +2093,7 @@ const STRINGS = {
         cycleAll:'5秒ごとにすべてランダム',
         toggleMusic:'音楽オン/オフ', musicVolume:'音楽ボリューム',
         toggleBallSound:'ボール音オン/オフ', ballHitVolume:'衝突音ボリューム',
-        muteAll:'すべてミュート',
+        muteAll:'すべてミュート', toggleSettings:'設定を開く',
         revShapeRot:'形の回転を反転',
         autoCycleShape:'10〜20秒ごとに形を切替',
         rndShapeBtn:'ランダムな形',
@@ -2146,7 +2138,7 @@ const STRINGS = {
         cycleAll:'每5秒自动随机',
         toggleMusic:'开关音乐', musicVolume:'音乐音量',
         toggleBallSound:'开关球音效', ballHitVolume:'撞击音量',
-        muteAll:'全部静音',
+        muteAll:'全部静音', toggleSettings:'打开设置',
         revShapeRot:'反转形状旋转',
         autoCycleShape:'每10–20秒切换形状',
         rndShapeBtn:'随机形状',
@@ -2286,39 +2278,22 @@ document.getElementById('rndTheme').addEventListener('click', () => {
 });
 
 // ── Shape / Cross auto-cycle ───────────────────────────────────
-let shapeCycleActive = false, shapeCycleTimer = null;
-let crossCycleActive = false, crossCycleTimer = null;
-
-function scheduleShapeCycle() {
-    shapeCycleTimer = setTimeout(() => {
-        if (!shapeCycleActive) return;
-        const btns = [...shapeGrid.querySelectorAll('.shape-btn')];
-        btns[Math.floor(Math.random() * btns.length)]?.click();
-        scheduleShapeCycle();
-    }, 10000 + Math.random() * 10000);
+function clickRandomShape(grid) {
+    const btns = grid.querySelectorAll('.shape-btn');
+    btns[Math.floor(Math.random() * btns.length)]?.click();
 }
 
-function scheduleCrossCycle() {
-    crossCycleTimer = setTimeout(() => {
-        if (!crossCycleActive) return;
-        const btns = [...crossGrid.querySelectorAll('.shape-btn')];
-        btns[Math.floor(Math.random() * btns.length)]?.click();
-        scheduleCrossCycle();
-    }, 10000 + Math.random() * 10000);
-}
+const shapeCycler = makeCycler(SHAPE_CYCLE_MS, () => clickRandomShape(shapeGrid));
+const crossCycler = makeCycler(SHAPE_CYCLE_MS, () => clickRandomShape(crossGrid));
 
 document.getElementById('cycleShape').addEventListener('click', function() {
-    shapeCycleActive = !shapeCycleActive;
-    this.classList.toggle('active', shapeCycleActive);
-    clearTimeout(shapeCycleTimer);
-    if (shapeCycleActive) scheduleShapeCycle();
+    shapeCycler.set(!shapeCycler.active);
+    this.classList.toggle('active', shapeCycler.active);
 });
 
 document.getElementById('cycleCross').addEventListener('click', function() {
-    crossCycleActive = !crossCycleActive;
-    this.classList.toggle('active', crossCycleActive);
-    clearTimeout(crossCycleTimer);
-    if (crossCycleActive) scheduleCrossCycle();
+    crossCycler.set(!crossCycler.active);
+    this.classList.toggle('active', crossCycler.active);
 });
 
 // ── Everything Random ──────────────────────────────────────────

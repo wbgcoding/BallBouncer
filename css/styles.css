@@ -463,8 +463,9 @@ hr.sep {
 /* ── Section headers ────────────────────────────── */
 .sec-header {
     display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:6px;
+    margin-bottom:5px;
 }
+.sec-header .sec-title { margin-bottom:0; }
 .sec-title {
     font-size:9px; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
     color:#3a5468;
@@ -487,12 +488,6 @@ hr.sep {
     width:2px; height:10px;
     background:var(--accent); border-radius:1px; opacity:.45;
 }
-.sec-header {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:5px;
-}
-.sec-header .sec-title { margin-bottom:0; }
-
 .rnd-btn {
     flex-shrink:0; position:relative;
     background:#0b1222; border:1.5px solid #162030;

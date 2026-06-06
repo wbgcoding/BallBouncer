@@ -4,6 +4,35 @@ All notable changes to BallBouncer are documented here.
 
 ---
 
+## [1.9.0] - 2026-06-06
+
+### Improvements
+- **Smoother trails** — trail rendering no longer copies data every frame, keeping the framerate stable even with hundreds of balls and long trails
+- **Leaner auto-cycle engine** — the four auto-cycle features (themes, background, shapes, cross) now share one timer system, making toggling them snappier and more reliable
+- **Mobile settings button translated** — the settings tooltip on phones now follows your language like everything else
+
+### Fixes
+- **Italian translation** — the "Storm" theme showed its German name in Italian; it now correctly reads "Tempesta"
+- **Internal cleanup** — removed duplicate startup code and a duplicated style rule; no visible change, just a tidier engine
+
+---
+
+## [1.8.2] - 2026-05-30
+
+### Features
+- **Animated rainbow ball icon** — the sound icon is now a small animated 3D rainbow sphere matching the logo
+- **Language selector with 43 translated strings** — tooltips and labels fully localized in all 8 languages
+
+### Improvements
+- **Mobile UI overhaul** — settings panel scrolling fixed, theme grids show all rows, logo moved to the top edge, bottom row no longer hidden behind the browser navigation bar
+- **Escape-proof physics** — balls can no longer tunnel through walls at high speed; the shape gently rescales and snaps them back inside
+- **Fog effect optimized** — capped to 8 layered objects to prevent lag on slower devices
+
+### Fixes
+- Corrected shape size calculation and an HTML nesting issue; removed dead CSS and 11 unused files
+
+---
+
 ## [1.7.0] - 2026-05-29
 
 ### Performance & Core

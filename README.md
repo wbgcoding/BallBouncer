@@ -34,6 +34,10 @@ Balls spawn on their own. From there:
 
 Your shape, physics and sound settings are saved in `localStorage`. The color themes reroll on each visit, so it looks a little different every time you open it.
 
+## Privacy
+
+Everything runs in your browser. Settings stay on your device in `localStorage` — no accounts, no cookies, no personal data collected. The hosted version uses Vercel's cookieless, anonymized page analytics.
+
 ## Built with
 
 - Plain JavaScript, no frameworks.
